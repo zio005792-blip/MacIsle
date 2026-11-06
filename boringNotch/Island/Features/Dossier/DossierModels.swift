@@ -125,9 +125,23 @@ struct DossierHit: Hashable, Codable {
     let value: String
 }
 
+struct DossierFact: Hashable, Codable {
+    let label: String
+    let value: String
+}
+
+/// A sensitive region to black out (normalised rect, Vision coordinates: origin bottom-left).
+struct DossierRedaction: Hashable, Codable {
+    let page: Int
+    let rect: CGRect
+}
+
 struct DossierDocument: Identifiable, Codable {
     let id: UUID
     let relativePath: String
+    var fileSize: Int = 0
+    var facts: [DossierFact] = []
+    var redactions: [DossierRedaction] = []
     var name: String { (relativePath as NSString).lastPathComponent }
     var category: DossierCategory
     var text: String
@@ -164,4 +178,73 @@ struct DossierField: Identifiable {
 
     var needsConfirmation: Bool { variants.count > 1 && chosen == nil && kind.isIdentity }
     var resolvedValue: String? { chosen ?? (variants.count == 1 ? variants[0].value : nil) }
+}
+
+// MARK: - Submission checklist
+
+enum DossierChecklistKind: String, CaseIterable, Codable {
+    case app, game, none
+
+    var title: String {
+        switch self {
+        case .app: return "App 上架"
+        case .game: return "游戏上架"
+        case .none: return "不检查"
+        }
+    }
+}
+
+struct DossierChecklistItem: Identifiable {
+    var id: String { title }
+    let title: String
+    var shortTitle: String {
+        switch title {
+        case "软件著作权证书": return "软著"
+        case "ICP / App 备案": return "备案"
+        case "防沉迷 / 实名认证": return "防沉迷"
+        case "法人身份证": return "身份证"
+        default: return title
+        }
+    }
+    let required: Bool
+    let satisfiedBy: [String]   // file names
+    var present: Bool { !satisfiedBy.isEmpty }
+}
+
+// MARK: - History
+
+struct DossierSnapshot: Codable {
+    let date: Date
+    let folder: String
+    let files: [String: Int]          // relative path → size
+    let fields: [String: String]      // field kind → resolved value
+}
+
+struct DossierDiff {
+    let previousDate: Date
+    let added: [String]
+    let removed: [String]
+    let modified: [String]
+    let changedFields: [(DossierFieldKind, String, String)]   // kind, old, new
+
+    var isEmpty: Bool { added.isEmpty && removed.isEmpty && modified.isEmpty && changedFields.isEmpty }
+
+    /// Very short form for the island chip: "+1 改1 变1".
+    var shortSummary: String {
+        var parts: [String] = []
+        if !added.isEmpty { parts.append("+\(added.count)") }
+        if !removed.isEmpty { parts.append("−\(removed.count)") }
+        if !modified.isEmpty { parts.append("改\(modified.count)") }
+        if !changedFields.isEmpty { parts.append("信息变\(changedFields.count)") }
+        return parts.isEmpty ? "无变化" : parts.joined(separator: " ")
+    }
+
+    var summary: String {
+        var parts: [String] = []
+        if !added.isEmpty { parts.append("新增 \(added.count)") }
+        if !removed.isEmpty { parts.append("删除 \(removed.count)") }
+        if !modified.isEmpty { parts.append("改动 \(modified.count)") }
+        if !changedFields.isEmpty { parts.append("信息变更 \(changedFields.count)") }
+        return parts.isEmpty ? "与上一版相同" : parts.joined(separator: " · ")
+    }
 }

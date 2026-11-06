@@ -179,7 +179,7 @@ struct IslandMetrics {
         case .media: return CGSize(width: 278, height: 148)
         case .agents: return CGSize(width: 352, height: 148)
         case .screens: return CGSize(width: 352, height: 148)
-        case .dossier: return CGSize(width: 400, height: 176)
+        case .dossier: return CGSize(width: 410, height: 198)
         case .home: return CGSize(width: 352, height: 148)
         case .timer: return CGSize(width: 300, height: 148)
         case .calendar: return CGSize(width: 352, height: 176)

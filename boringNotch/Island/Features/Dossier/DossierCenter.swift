@@ -29,6 +29,17 @@ final class DossierCenter: ObservableObject {
     @Published private(set) var documents: [DossierDocument] = []
     @Published private(set) var fields: [DossierField] = []
     @Published private(set) var startedAt: Date?
+    @Published private(set) var diff: DossierDiff?
+    @Published private(set) var redactedFolder: URL?
+    @AppStorage("island.dossier.checklist") var checklistKindRaw: String = DossierChecklistKind.app.rawValue
+
+    var checklistKind: DossierChecklistKind {
+        get { DossierChecklistKind(rawValue: checklistKindRaw) ?? .app }
+        set { checklistKindRaw = newValue.rawValue; objectWillChange.send() }
+    }
+
+    var checklist: [DossierChecklistItem] { DossierExtractor.checklist(checklistKind, documents: documents) }
+    var missingRequired: [DossierChecklistItem] { checklist.filter { $0.required && !$0.present } }
 
     private var folderURL: URL?
     private var scanTask: Task<Void, Never>?
@@ -87,6 +98,8 @@ final class DossierCenter: ObservableObject {
         folderName = isDir.boolValue ? folder.lastPathComponent : folder.deletingPathExtension().lastPathComponent
         documents = []
         fields = []
+        diff = nil
+        redactedFolder = nil
         startedAt = .now
         phase = .scanning(done: 0, total: 0, current: "正在查找文件…")
 
@@ -107,17 +120,22 @@ final class DossierCenter: ObservableObject {
                 await self?.report(done: i, total: files.count, current: url.lastPathComponent)
                 results.append(Self.process(url, relativePath: rel))
             }
+            results = DossierExtractor.reconcileTransactionParties(results)
             let compared = DossierExtractor.compare(results)
             await self?.finishScan(results, compared)
         }
     }
 
     nonisolated private static func process(_ url: URL, relativePath: String) -> DossierDocument {
+        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         do {
             let r = try DossierExtractor.read(url)
+            let category = DossierExtractor.classify(text: r.text, fileName: url.lastPathComponent, imageAspect: r.imageAspect)
             return DossierDocument(
-                id: UUID(), relativePath: relativePath,
-                category: DossierExtractor.classify(text: r.text, fileName: url.lastPathComponent, imageAspect: r.imageAspect),
+                id: UUID(), relativePath: relativePath, fileSize: size,
+                facts: DossierExtractor.extractFacts(from: r.text, category: category),
+                redactions: r.redactions,
+                category: category,
                 text: r.text, pageCount: r.pages, usedOCR: r.usedOCR,
                 hits: DossierExtractor.extractHits(from: r.text),
                 dates: DossierExtractor.extractDates(from: r.text),
@@ -140,6 +158,10 @@ final class DossierCenter: ObservableObject {
     private func finishScan(_ docs: [DossierDocument], _ compared: [DossierField]) {
         documents = docs
         fields = compared
+        // Compare with the last time this client was processed, then remember this version.
+        let key = historyKey()
+        if let previous = DossierHistory.load()[key] { diff = DossierHistory.diff(previous, docs, compared) }
+        DossierHistory.save(key: key, folder: folderName, documents: docs, fields: compared)
         phase = .review
         let pending = pendingConfirmations.count
         IslandUIState.shared.flash(.dossier, duration: 4.5)
@@ -165,14 +187,51 @@ final class DossierCenter: ObservableObject {
         documents = []
         fields = []
         folderName = ""
+        diff = nil
+        redactedFolder = nil
     }
 
     // MARK: Export
 
+    private func historyKey() -> String {
+        fields.first(where: { $0.kind == .entityName })?.variants.first?.value ?? folderName
+    }
+
+    private var reportContext: DossierReport.Context {
+        DossierReport.Context(folder: folderName, documents: documents, fields: fields, startedAt: startedAt ?? .now,
+                              checklistKind: checklistKind, checklist: checklist, diff: diff)
+    }
+
+    /// 打码版: a masked report plus copies of every image / PDF with ID, phone and card numbers blacked out.
+    func exportRedacted() {
+        guard !documents.isEmpty else { return }
+        phase = .exporting
+        let access = folderURL?.startAccessingSecurityScopedResource() ?? false
+        defer { if access { folderURL?.stopAccessingSecurityScopedResource() } }
+        do {
+            let html = DossierReport.html(reportContext, masked: true)
+            let report = try DossierReport.writeDocx(html: html, folder: folderName, suffix: "打码版")
+            let dir = report.deletingLastPathComponent()
+                .appendingPathComponent(report.deletingPathExtension().lastPathComponent + " 附件", isDirectory: true)
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            var isDir: ObjCBool = false
+            let root: URL? = folderURL.flatMap { FileManager.default.fileExists(atPath: $0.path, isDirectory: &isDir) && isDir.boolValue ? $0 : $0.deletingLastPathComponent() }
+            for doc in documents where !doc.redactions.isEmpty {
+                guard let root else { break }
+                DossierRedactor.redact(source: root.appendingPathComponent(doc.relativePath), doc: doc, into: dir)
+            }
+            redactedFolder = dir
+            phase = .finished(report)
+            NSWorkspace.shared.activateFileViewerSelecting([report, dir])
+        } catch {
+            phase = .failed("生成打码版失败：\(error.localizedDescription)")
+        }
+    }
+
     func export() {
         guard !documents.isEmpty else { return }
         phase = .exporting
-        let html = DossierReport.html(folder: folderName, documents: documents, fields: fields, startedAt: startedAt ?? .now)
+        let html = DossierReport.html(reportContext, masked: false)
         do {
             let url = try DossierReport.writeDocx(html: html, folder: folderName)
             phase = .finished(url)

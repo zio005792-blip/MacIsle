@@ -100,6 +100,8 @@ enum IslandDebug {
             DossierCenter.shared.start(folder: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(arg.isEmpty ? "dossier-sample" : arg))
         case "dossier-export":
             DossierCenter.shared.export()
+        case "dossier-redact":
+            DossierCenter.shared.exportRedacted()
         case "dossier-majority":
             DossierCenter.shared.acceptMajorityForAll()
         case "swipe":

@@ -174,6 +174,8 @@ struct IslandDossierPage: View {
                 .frame(maxWidth: 210)
             }
 
+            statusRow
+
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 3) {
                     ForEach(center.fields
@@ -189,7 +191,7 @@ struct IslandDossierPage: View {
                 Image(systemName: pending == 0 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(pending == 0 ? Color.green : Color.orange)
-                Text(pending == 0 ? "关键信息已核对" : "\(pending) 项不一致，点选正确的值")
+                Text(pending == 0 ? "已核对" : "\(pending) 项待确认")
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.7))
                 Spacer()
@@ -197,6 +199,9 @@ struct IslandDossierPage: View {
                     Button("按多数") { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { center.acceptMajorityForAll() } }
                         .buttonStyle(IslandPillButtonStyle())
                 }
+                Button("打码版") { center.exportRedacted() }
+                    .buttonStyle(IslandPillButtonStyle())
+                    .help("生成隐藏身份证号、银行卡号、手机号的报告，并给图片和 PDF 打码")
                 Button {
                     center.export()
                 } label: {
@@ -209,6 +214,58 @@ struct IslandDossierPage: View {
                 .buttonStyle(IslandPillButtonStyle(tint: .accentColor))
             }
         }
+    }
+
+    /// Submission checklist + comparison with the previous version of this client.
+    private var statusRow: some View {
+        HStack(spacing: 6) {
+            Button {
+                let all = DossierChecklistKind.allCases
+                let i = all.firstIndex(of: center.checklistKind) ?? 0
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { center.checklistKind = all[(i + 1) % all.count] }
+            } label: {
+                let missing = center.missingRequired
+                HStack(spacing: 4) {
+                    Image(systemName: center.checklistKind == .none ? "list.bullet.clipboard" : (missing.isEmpty ? "checkmark.circle.fill" : "xmark.circle.fill"))
+                        .foregroundStyle(center.checklistKind == .none ? Color.white.opacity(0.5) : (missing.isEmpty ? Color.green : Color.red))
+                    Text(center.checklistKind == .none ? "不检查材料"
+                         : missing.isEmpty ? "\(center.checklistKind.title)材料齐全"
+                         : "缺\(missing.map(\.shortTitle).joined(separator: "、"))")
+                        .lineLimit(1)
+                }
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.8))
+                .padding(.horizontal, 7)
+                .frame(height: 18)
+                .background(Capsule().fill(Color.white.opacity(0.07)))
+                .contentShape(Capsule())
+            }
+            .buttonStyle(IslandPressStyle())
+            .help("点击切换：App 上架 / 游戏上架 / 不检查\n" + center.checklist.map { "\($0.present ? "✓" : ($0.required ? "✗" : "·")) \($0.title)" }.joined(separator: "\n"))
+
+            if let diff = center.diff {
+                HStack(spacing: 4) {
+                    Image(systemName: "clock.arrow.circlepath")
+                    Text("较上版 \(diff.shortSummary)").lineLimit(1)
+                }
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(diff.changedFields.isEmpty ? Color.white.opacity(0.6) : Color.orange)
+                .padding(.horizontal, 7)
+                .frame(height: 18)
+                .background(Capsule().fill(Color.white.opacity(0.07)))
+                .help(diffHelp(diff))
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func diffHelp(_ d: DossierDiff) -> String {
+        var lines: [String] = []
+        if !d.added.isEmpty { lines.append("新增：" + d.added.joined(separator: "、")) }
+        if !d.removed.isEmpty { lines.append("删除：" + d.removed.joined(separator: "、")) }
+        if !d.modified.isEmpty { lines.append("改动：" + d.modified.joined(separator: "、")) }
+        for (k, o, n) in d.changedFields { lines.append("\(k.title)：\(k.masked(o)) → \(k.masked(n))") }
+        return lines.isEmpty ? "与上一版相同" : lines.joined(separator: "\n")
     }
 
     private func fieldRow(_ field: DossierField) -> some View {
@@ -286,7 +343,7 @@ struct IslandDossierPage: View {
                     .foregroundStyle(.white.opacity(0.55))
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Text("下载 › 客户资料整理")
+                Text(center.redactedFolder == nil ? "下载 › 客户资料整理" : "打码版报告 + 打码后的图片 / PDF · 下载 › 客户资料整理")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.white.opacity(0.35))
                 Spacer(minLength: 0)
