@@ -68,6 +68,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowScreenDidChangeObserver: Any?
     private var dragDetectors: [String: DragDetector] = [:] // UUID -> DragDetector
 
+    /// `boringisland://agent?...` from Claude Code / Codex / shell hooks.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        Task { @MainActor in
+            for url in urls { AgentCenter.shared.handle(url: url) }
+        }
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }
@@ -196,8 +203,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let uuid = screen.displayUUID else { return }
         
         let screenFrame = screen.frame
-        let notchHeight = openNotchSize.height
-        let notchWidth = openNotchSize.width
+        // Only react when a dragged file reaches the island itself (plus a small margin),
+        // not a large invisible block at the top of the screen.
+        let island = IslandMetrics(screenUUID: uuid)
+        let notchHeight = island.topGap + island.compactHeight + 18
+        let notchWidth = island.idleWidth + 120
         
         // Create notch region at the top-center of the screen where an open notch would occupy
         let notchRegion = CGRect(
@@ -232,7 +242,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func createBoringNotchWindow(for screen: NSScreen, with viewModel: BoringViewModel) -> NSWindow {
-        let rect = NSRect(x: 0, y: 0, width: windowSize.width, height: windowSize.height)
+        let rect = NSRect(x: 0, y: 0, width: IslandMetrics.windowSize.width, height: IslandMetrics.windowSize.height)
         let styleMask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel, .utilityWindow, .hudWindow]
         
         let window = BoringNotchSkyLightWindow(contentRect: rect, styleMask: styleMask, backing: .buffered, defer: false)
@@ -245,7 +255,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         window.contentView = NSHostingView(
-            rootView: ContentView()
+            rootView: IslandRootView()
                 .environmentObject(viewModel)
         )
 

@@ -117,6 +117,7 @@ final class SharingLifecycleDelegate: NSObject, NSSharingServiceDelegate, NSShar
 	private func finishIfNeeded() {
 		guard !finished else { return }
 		finished = true
+		Task { @MainActor in ShareAnchorWindow.dismiss() }
 		timeoutTask?.cancel()
 		onFinish()
 		onEnd()
@@ -134,6 +135,7 @@ final class SharingLifecycleDelegate: NSObject, NSSharingServiceDelegate, NSShar
 
 		service?.delegate = self
 		serviceInProgress = true
+		MainActor.assumeIsolated { _ = ShareAnchorWindow.prepare() }
 		startTimeoutFallback()
 	}
 
@@ -150,8 +152,62 @@ final class SharingLifecycleDelegate: NSObject, NSSharingServiceDelegate, NSShar
 		finishIfNeeded()
 	}
 
+	/// Share extensions (Messages, Notes, Mail…) attach their compose UI to a *key-capable*
+	/// source window. The island panel can never become key, which made ShareKit assert and
+	/// abort the whole app. Hand it a transparent anchor window instead.
+	func sharingService(_ sharingService: NSSharingService,
+	                    sourceWindowForShareItems items: [Any],
+	                    sharingContentScope: UnsafeMutablePointer<NSSharingService.SharingContentScope>) -> NSWindow? {
+		MainActor.assumeIsolated { ShareAnchorWindow.prepare() }
+	}
+
+	func sharingService(_ sharingService: NSSharingService, sourceFrameOnScreenForShareItem item: Any) -> NSRect {
+		MainActor.assumeIsolated { ShareAnchorWindow.anchorRect }
+	}
+
 	func sharingService(_ sharingService: NSSharingService, didFailToShareItems items: [Any], error: Error) {
 		finishIfNeeded()
 	}
 }
 
+
+
+/// Invisible, key-capable window just under the island, used as the anchor for share sheets.
+@MainActor
+final class ShareAnchorWindow: NSPanel {
+	private static var shared: ShareAnchorWindow?
+
+	override var canBecomeKey: Bool { true }
+	override var canBecomeMain: Bool { true }
+
+	static var anchorRect: NSRect {
+		let screen = NSScreen.main ?? NSScreen.screens.first
+		let frame = screen?.frame ?? .zero
+		let visible = screen?.visibleFrame ?? .zero
+		return NSRect(x: frame.midX - 1, y: visible.maxY - 2, width: 2, height: 2)
+	}
+
+	@discardableResult
+	static func prepare() -> NSWindow {
+		let window = shared ?? {
+			let w = ShareAnchorWindow(contentRect: anchorRect, styleMask: [.borderless, .nonactivatingPanel],
+			                          backing: .buffered, defer: false)
+			w.isOpaque = false
+			w.backgroundColor = .clear
+			w.hasShadow = false
+			w.level = .floating
+			w.isReleasedWhenClosed = false
+			w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
+			shared = w
+			return w
+		}()
+		window.setFrame(anchorRect, display: false)
+		NSApp.activate(ignoringOtherApps: true)
+		window.makeKeyAndOrderFront(nil)
+		return window
+	}
+
+	static func dismiss() {
+		shared?.orderOut(nil)
+	}
+}
