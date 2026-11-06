@@ -17,6 +17,8 @@ enum IslandDebug {
     static let commandURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("island-debug.txt")
     private static var timer: Timer?
     static var synthActive = false
+    static var fakeMouse: NSPoint?
+    static var lastZone: NSRect = .zero
     static let logURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("island-log.txt")
 
     nonisolated static func log(_ message: String) {
@@ -85,6 +87,16 @@ enum IslandDebug {
             StoreScreenshots.shared.process(files)
         case "show":
             vm.hideOnClosed = false
+        case "mouse":
+            // mouse:<dx>,<dy> relative to the expanded zone's top-centre (points, y downwards); mouse:off
+            if arg == "off" { fakeMouse = nil; break }
+            let v = arg.split(separator: ",").compactMap { Double($0) }
+            if let w = NSApp.windows.first(where: { $0 is BoringNotchSkyLightWindow }), v.count == 2 {
+                fakeMouse = NSPoint(x: w.frame.midX + v[0], y: w.frame.maxY - v[1])
+            }
+            log("fake mouse \(String(describing: fakeMouse)) state=\(vm.notchState)")
+        case "state":
+            log("state=\(vm.notchState)")
         case "notch":
             UserDefaults.standard.set(arg != "off", forKey: "island.debug.simulateNotch")
             NotificationCenter.default.post(name: .notchHeightChanged, object: nil)

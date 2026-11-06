@@ -29,6 +29,9 @@ struct IslandRootView: View {
     @State private var dropDebounce: Task<Void, Never>?
     @State private var pendingTab: IslandTab?
     @State private var hapticTick = false
+    /// Dwell bookkeeping for hover-to-open. A reference type, so polling never re-renders the view.
+    @State private var dwell = HoverDwell()
+    private static let hoverPoll = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
 
     private var metrics: IslandMetrics { IslandMetrics(screenUUID: vm.screenUUID) }
 
@@ -174,6 +177,7 @@ struct IslandRootView: View {
         .sensoryFeedback(.alignment, trigger: hapticTick)
         .onChange(of: vm.notchState) { _, state in
             guard state == .open else {
+                dwell.armed = false
                 IslandPredictor.shared.learn(finalTab: ui.tab)
                 ui.showHint(nil)
                 return
@@ -216,6 +220,9 @@ struct IslandRootView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .islandRequestClose)) { _ in
             close()
+        }
+        .onReceive(Self.hoverPoll) { _ in
+            pollHoverZone()
         }
         .onAppear {
             if coordinator.helloAnimationRunning { vm.closeHello() }
@@ -288,14 +295,44 @@ struct IslandRootView: View {
         withAnimation(IslandMotion.close) { vm.close() }
     }
 
-    /// The inner part of the resting pill (screen coordinates), used for hover-to-open.
-    private func inHotZone(_ p: NSPoint) -> Bool {
-        guard let window = NSApp.windows.first(where: { $0 is BoringNotchSkyLightWindow && $0.isVisible }) else { return false }
+    /// Hover-to-open zone: the footprint the island will occupy once expanded (screen coordinates).
+    private func expandedZone() -> NSRect? {
+        guard let window = NSApp.windows.first(where: { $0 is BoringNotchSkyLightWindow && $0.isVisible }) else { return nil }
         let m = metrics
-        let size = m.size(for: presentation)
-        let top = window.frame.maxY - m.topGap
-        let rect = NSRect(x: window.frame.midX - size.width / 2, y: top - size.height, width: size.width, height: size.height)
-        return rect.insetBy(dx: size.width * 0.2, dy: -2).contains(p)
+        let size = m.size(for: .expanded(ui.tab))
+        let top = window.frame.maxY
+        return NSRect(x: window.frame.midX - size.width / 2, y: top - m.topGap - size.height,
+                      width: size.width, height: size.height + m.topGap)
+    }
+
+    /// Polled while closed: open when the pointer rests inside the expanded footprint.
+    private func pollHoverZone() {
+        guard vm.notchState == .closed, Defaults[.openNotchOnHover], !coordinator.firstLaunch,
+              presentation != .hidden, !coordinator.sneakPeek.show,
+              NSEvent.pressedMouseButtons == 0, let zone = expandedZone() else {
+            #if DEBUG
+            if let z = expandedZone() { IslandDebug.lastZone = z }
+            #endif
+            dwell.reset()
+            return
+        }
+        var p = NSEvent.mouseLocation
+        #if DEBUG
+        if let fake = IslandDebug.fakeMouse { p = fake }
+        #endif
+        guard zone.contains(p) else { dwell.reset(); dwell.armed = true; return }
+        // After the island closes, the pointer has to leave the area once before it can re-open.
+        guard dwell.armed else { return }
+        if let anchor = dwell.point, hypot(p.x - anchor.x, p.y - anchor.y) <= 10 {
+            if Date.now.timeIntervalSince(dwell.since) >= max(0.12, Defaults[.minimumHoverDuration]) {
+                dwell.reset()
+                dwell.armed = false
+                open(to: nil)
+            }
+        } else {
+            dwell.point = p          // entered or moved: start waiting again
+            dwell.since = .now
+        }
     }
 
     private func handleHover(_ isHovering: Bool) {
@@ -305,26 +342,7 @@ struct IslandRootView: View {
         if isHovering {
             if !hovering && vm.notchState == .closed && Defaults[.enableHaptics] { hapticTick.toggle() }
             withAnimation(IslandMotion.touch) { hovering = true }
-            guard vm.notchState == .closed, Defaults[.openNotchOnHover], !coordinator.sneakPeek.show else { return }
-            let delay = max(0.12, Defaults[.minimumHoverDuration])
-            hoverTask = Task {
-                // Hover-to-open needs a deliberate rest on the *core* of the pill: the pointer
-                // must sit in the middle part and stay (almost) still for the whole delay.
-                var anchor = NSEvent.mouseLocation
-                var waited = 0.0
-                while waited < delay {
-                    try? await Task.sleep(for: .milliseconds(40))
-                    guard !Task.isCancelled, hovering, vm.notchState == .closed else { return }
-                    let p = NSEvent.mouseLocation
-                    if !inHotZone(p) || hypot(p.x - anchor.x, p.y - anchor.y) > 6 {
-                        anchor = p      // moved or off-centre: restart the wait
-                        waited = 0
-                        continue
-                    }
-                    waited += 0.04
-                }
-                open(to: nil)
-            }
+            // Opening is handled by pollHoverZone (expanded-footprint dwell).
         } else {
             hoverTask = Task {
                 try? await Task.sleep(for: .milliseconds(vm.notchState == .open ? 220 : 60))
@@ -360,4 +378,12 @@ struct IslandRootView: View {
             if !hovering && !SharingStateManager.shared.preventNotchClose { close() }
         }
     }
+}
+
+/// Mutable hover-dwell state that SwiftUI doesn't observe.
+final class HoverDwell {
+    var point: NSPoint?
+    var since = Date.distantFuture
+    var armed = true
+    func reset() { point = nil }
 }
