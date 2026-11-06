@@ -37,10 +37,14 @@ enum IslandKeyboard {
         for window in NSApp.windows.compactMap({ $0 as? BoringNotchSkyLightWindow }) {
             window.allowsKeyFocus = true
         }
-        NSApp.activate(ignoringOtherApps: true)
+        // A non-activating panel can take key focus without pulling your current app to the
+        // background (same trick as Spotlight / Raycast), so typing returns there right after.
         if let window = NSApp.windows.first(where: { $0 is BoringNotchSkyLightWindow && $0.isVisible }) {
-            window.makeKey()
+            window.makeKeyAndOrderFront(nil)
         }
+        #if DEBUG
+        IslandDebug.log("keyboard mode: keyWindow=\(String(describing: NSApp.keyWindow.map { type(of: $0) })) active=\(NSApp.isActive)")
+        #endif
 
         monitor.map(NSEvent.removeMonitor)
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
@@ -67,7 +71,7 @@ enum IslandKeyboard {
             window.allowsKeyFocus = false
             window.resignKey()
         }
-        previousApp?.activate()
+        if NSApp.isActive { previousApp?.activate() }
         previousApp = nil
     }
 

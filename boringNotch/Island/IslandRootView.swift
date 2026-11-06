@@ -100,7 +100,8 @@ struct IslandRootView: View {
             topGap: m.topGap,
             bubbleRadius: bubble == nil ? 0 : d / 2,
             bubbleGap: bubble == nil ? -d : m.bubbleGap,
-            scale: scale
+            scale: scale,
+            flushTop: m.flushTop
         )
 
         ZStack(alignment: .top) {
@@ -109,7 +110,7 @@ struct IslandRootView: View {
                 shadowOpacity: p.isExpanded ? 0.55 : (hovering ? 0.28 : 0.0),
                 keylineOpacity: p.isExpanded ? 0.10 : 0.07,
                 restingBubbleRadius: d / 2,
-                camera: ui.showCamera && p != .hidden
+                camera: ui.showCamera && p != .hidden && !m.flushTop
                     ? (offsetX: m.cameraOffset, centerY: m.topGap + m.compactHeight / 2, diameter: m.cameraDiameter)
                     : nil
             )
@@ -233,20 +234,25 @@ struct IslandRootView: View {
 
     @ViewBuilder
     private func islandContent(_ p: IslandPresentation, size: CGSize) -> some View {
+        let m = metrics
+        // On notch screens tall content starts below the physical notch.
+        let inset: CGFloat = m.flushTop && size.height > m.compactHeight + 1 ? m.notchInset : 0
+        let contentSize = CGSize(width: size.width, height: size.height - inset)
         ZStack(alignment: .top) {
             Group {
                 switch p {
                 case .expanded:
-                    IslandExpandedView(size: size, namespace: namespace)
+                    IslandExpandedView(size: contentSize, namespace: namespace)
                         .environmentObject(vm)
                 case .hidden, .idle:
-                    Color.clear.frame(width: size.width, height: size.height)
+                    Color.clear.frame(width: contentSize.width, height: contentSize.height)
                 default:
-                    IslandCompactContent(presentation: p, size: size, metrics: metrics, namespace: namespace)
+                    IslandCompactContent(presentation: p, size: contentSize, metrics: m, namespace: namespace)
                 }
             }
             .id(p.key)
             .transition(.islandContent)
+            .padding(.top, inset)
         }
         .frame(width: size.width, height: size.height, alignment: .top)
     }

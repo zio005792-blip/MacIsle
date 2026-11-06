@@ -21,6 +21,27 @@ struct IslandBodyGeometry: Equatable {
     /// Negative values tuck the bubble inside the island (used while it buds off / merges back).
     var bubbleGap: CGFloat
     var scale: CGFloat
+    /// Flush with the screen's top edge (notch screens): square top + concave "ears".
+    var flushTop: Bool = false
+}
+
+extension Path {
+    /// A notch-style silhouette: square top flush with the screen edge, rounded bottom
+    /// corners and small concave fillets ("ears") where it meets the menu bar.
+    static func notch(_ r: CGRect, bottomRadius: CGFloat, ear: CGFloat) -> Path {
+        let br = min(bottomRadius, r.height / 2, r.width / 2)
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX - ear, y: r.minY))
+        p.addQuadCurve(to: CGPoint(x: r.minX, y: r.minY + ear), control: CGPoint(x: r.minX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.minX, y: r.maxY - br))
+        p.addArc(tangent1End: CGPoint(x: r.minX, y: r.maxY), tangent2End: CGPoint(x: r.minX + br, y: r.maxY), radius: br)
+        p.addLine(to: CGPoint(x: r.maxX - br, y: r.maxY))
+        p.addArc(tangent1End: CGPoint(x: r.maxX, y: r.maxY), tangent2End: CGPoint(x: r.maxX, y: r.maxY - br), radius: br)
+        p.addLine(to: CGPoint(x: r.maxX, y: r.minY + ear))
+        p.addQuadCurve(to: CGPoint(x: r.maxX + ear, y: r.minY), control: CGPoint(x: r.maxX, y: r.minY))
+        p.closeSubpath()
+        return p
+    }
 }
 
 extension IslandBodyGeometry: Animatable {
@@ -69,7 +90,9 @@ struct IslandBodyShape: Shape {
         let g = geometry
         let main = g.mainRect(containerWidth: rect.width)
         let radius = min(g.radius * g.scale, main.height / 2)
-        let body = Path(roundedRect: main, cornerRadius: radius, style: .continuous)
+        let body = g.flushTop
+            ? Path.notch(main, bottomRadius: radius, ear: 6)
+            : Path(roundedRect: main, cornerRadius: radius, style: .continuous)
 
         let r2 = g.bubbleRadius * g.scale
         guard r2 > 0.2 else { return body }
@@ -197,6 +220,8 @@ struct IslandMainShape: Shape {
     func path(in rect: CGRect) -> Path {
         let main = geometry.mainRect(containerWidth: rect.width)
         let radius = min(geometry.radius * geometry.scale, main.height / 2)
-        return Path(roundedRect: main, cornerRadius: radius, style: .continuous)
+        return geometry.flushTop
+            ? Path.notch(main, bottomRadius: radius, ear: 0)
+            : Path(roundedRect: main, cornerRadius: radius, style: .continuous)
     }
 }

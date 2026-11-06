@@ -88,31 +88,42 @@ struct IslandMetrics {
     let menuBarHeight: CGFloat
     let hasHardwareNotch: Bool
     let hardwareNotchWidth: CGFloat
+    let hardwareNotchHeight: CGFloat
 
     init(screenUUID: String?) {
         let screen = screenUUID.flatMap { NSScreen.screen(withUUID: $0) } ?? NSScreen.main
+        // Debug aid: render the notch-screen layout on any display.
+        let simulate = UserDefaults.standard.bool(forKey: "island.debug.simulateNotch")
         if let screen {
             let bar = screen.frame.maxY - screen.visibleFrame.maxY
             // When the menu bar auto-hides visibleFrame reaches the top; fall back to the system thickness.
             menuBarHeight = bar > 8 ? bar : max(NSStatusBar.system.thickness, 24)
-            hasHardwareNotch = screen.safeAreaInsets.top > 0
-            if let l = screen.auxiliaryTopLeftArea?.width, let r = screen.auxiliaryTopRightArea?.width {
+            hasHardwareNotch = screen.safeAreaInsets.top > 0 || simulate
+            if let l = screen.auxiliaryTopLeftArea?.width, let r = screen.auxiliaryTopRightArea?.width, screen.safeAreaInsets.top > 0 {
                 hardwareNotchWidth = screen.frame.width - l - r
+                hardwareNotchHeight = screen.safeAreaInsets.top
             } else {
-                hardwareNotchWidth = 0
+                hardwareNotchWidth = simulate ? 196 : 0
+                hardwareNotchHeight = simulate ? 32 : 0
             }
         } else {
             menuBarHeight = 30
             hasHardwareNotch = false
             hardwareNotchWidth = 0
+            hardwareNotchHeight = 0
         }
     }
+
+    /// On notch screens the island is flush with the top edge and wraps the physical notch.
+    var flushTop: Bool { hasHardwareNotch }
+    /// Height hidden behind the physical notch; tall content starts below it.
+    var notchInset: CGFloat { flushTop ? compactHeight : 0 }
 
     // MARK: Resting pill
 
     /// Height of the resting pill: 0.73 × menu bar, like the MacBook Pro island.
     var compactHeight: CGFloat {
-        if hasHardwareNotch { return max(menuBarHeight, 30) }
+        if hasHardwareNotch { return max(hardwareNotchHeight, 24) }
         let scale = CGFloat(UserDefaults.standard.object(forKey: "island.scale") as? Double ?? 1)
         return min(40, max(18, (menuBarHeight * 0.73 * scale).rounded()))
     }
@@ -125,7 +136,7 @@ struct IslandMetrics {
     }
 
     var idleWidth: CGFloat {
-        if hasHardwareNotch, hardwareNotchWidth > 0 { return hardwareNotchWidth }
+        if hasHardwareNotch, hardwareNotchWidth > 0 { return hardwareNotchWidth + 4 }
         return (compactHeight * 1.81).rounded()
     }
 
@@ -163,13 +174,14 @@ struct IslandMetrics {
             switch alert {
             case .power: return CGSize(width: idleWidth + 2 * (h + 58), height: h)
             case .copied: return CGSize(width: idleWidth + 2 * (h + 70), height: h)
-            case .track: return CGSize(width: 270, height: 62)
-            case .timerDone: return CGSize(width: 270, height: 62)
-            case .agent: return CGSize(width: 300, height: 62)
-            case .dossier: return CGSize(width: 300, height: 62)
+            case .track: return CGSize(width: max(270, idleWidth + 40), height: 62 + notchInset)
+            case .timerDone: return CGSize(width: max(270, idleWidth + 40), height: 62 + notchInset)
+            case .agent: return CGSize(width: max(300, idleWidth + 40), height: 62 + notchInset)
+            case .dossier: return CGSize(width: max(300, idleWidth + 40), height: 62 + notchInset)
             }
         case .expanded(let tab):
-            return Self.cardSize(for: tab)
+            let card = Self.cardSize(for: tab)
+            return CGSize(width: max(card.width, idleWidth + 60), height: card.height + notchInset)
         }
     }
 
@@ -190,6 +202,14 @@ struct IslandMetrics {
     }
 
     func cornerRadius(for presentation: IslandPresentation, size: CGSize) -> CGFloat {
+        if flushTop {
+            // Hardware-notch look: square top, rounded bottom.
+            switch presentation {
+            case .expanded: return Self.expandedRadius
+            case .alert(.track), .alert(.timerDone), .alert(.agent), .alert(.dossier): return 22
+            default: return min(size.height / 2, 11)
+            }
+        }
         switch presentation {
         case .expanded: return Self.expandedRadius
         case .alert(.track), .alert(.timerDone), .alert(.agent), .alert(.dossier): return 24

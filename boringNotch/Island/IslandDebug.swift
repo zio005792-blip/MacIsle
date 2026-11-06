@@ -85,6 +85,10 @@ enum IslandDebug {
             StoreScreenshots.shared.process(files)
         case "show":
             vm.hideOnClosed = false
+        case "notch":
+            UserDefaults.standard.set(arg != "off", forKey: "island.debug.simulateNotch")
+            NotificationCenter.default.post(name: .notchHeightChanged, object: nil)
+            vm.objectWillChange.send()
         case "selfcheck":
             IslandSelfCheck.shared.run()
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
