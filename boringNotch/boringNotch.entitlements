@@ -27,6 +27,8 @@
 		<string>com.spotify.client</string>
 		<string>com.apple.Music</string>
 		<string>com.apple.systemevents</string>
+		<string>com.apple.Terminal</string>
+		<string>com.googlecode.iterm2</string>
 	</array>
 </dict>
 </plist>

@@ -56,6 +56,10 @@ struct AgentSession: Identifiable, Equatable {
     var endedAt: Date?
     var reportedDuration: TimeInterval?
     var hostApp: String?
+    /// Deep link straight to the conversation (Claude desktop / Codex app).
+    var jumpURL: URL?
+    /// Terminal tab the task runs in, e.g. /dev/ttys003.
+    var tty: String?
 
     var isActive: Bool { state == .working || state == .attention }
 
@@ -127,6 +131,8 @@ final class AgentCenter: ObservableObject {
         if !detail.isEmpty { session.detail = detail }
         session.updatedAt = now
         if let app = q("app") { session.hostApp = app }
+        if let jump = q("jump").flatMap(URL.init(string:)), ["claude", "codex"].contains(jump.scheme ?? "") { session.jumpURL = jump }
+        if let tty = q("tty"), tty.hasPrefix("/dev/tty") { session.tty = tty }
 
         switch event {
         case "start", "working":
@@ -190,8 +196,80 @@ final class AgentCenter: ObservableObject {
         sessions.removeAll { $0.id == session.id }
     }
 
-    /// Brings the terminal / app the session runs in to the front.
+    /// Jumps to the exact conversation: the Claude / Codex thread, or the terminal tab it runs in.
     func reveal(_ session: AgentSession) {
+        defer { if !session.isActive { dismiss(session) } }   // looking at a finished task acknowledges it
+
+        if let url = session.jumpURL {
+            // The desktop apps switch to the thread in the background; bring them forward too.
+            let bundle = url.scheme == "codex" ? "com.openai.codex" : "com.anthropic.claudefordesktop"
+            NSWorkspace.shared.open(url)
+            if let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundle) {
+                let config = NSWorkspace.OpenConfiguration()
+                config.activates = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    NSWorkspace.shared.openApplication(at: app, configuration: config)
+                }
+            }
+            return
+        }
+        let host = session.hostApp ?? ""
+        if let tty = session.tty, host == "Apple_Terminal" || host == "iTerm.app" || host.isEmpty {
+            let script = host == "iTerm.app" ? Self.iTermScript(tty) : Self.terminalScript(tty)
+            DispatchQueue.global(qos: .userInitiated).async {
+                var error: NSDictionary?
+                NSAppleScript(source: script)?.executeAndReturnError(&error)
+                #if DEBUG
+                IslandDebug.log("terminal jump \(tty): \(error.map { "\($0[NSAppleScript.errorNumber] ?? "?") \($0[NSAppleScript.errorMessage] ?? "")" } ?? "ok")")
+                #endif
+                if error != nil { DispatchQueue.main.async { Self.openApp(for: session) } }
+            }
+            return
+        }
+        Self.openApp(for: session)
+    }
+
+    private static func terminalScript(_ tty: String) -> String {
+        """
+        tell application "Terminal"
+            repeat with w in windows
+                repeat with t in tabs of w
+                    if tty of t is "\(tty)" then
+                        set selected of t to true
+                        set index of w to 1
+                        activate
+                        return
+                    end if
+                end repeat
+            end repeat
+            activate
+        end tell
+        """
+    }
+
+    private static func iTermScript(_ tty: String) -> String {
+        """
+        tell application "iTerm2"
+            repeat with w in windows
+                repeat with t in tabs of w
+                    repeat with s in sessions of t
+                        if tty of s is "\(tty)" then
+                            select t
+                            select s
+                            set index of w to 1
+                            activate
+                            return
+                        end if
+                    end repeat
+                end repeat
+            end repeat
+            activate
+        end tell
+        """
+    }
+
+    /// Fallback: just bring the right app forward.
+    private static func openApp(for session: AgentSession) {
         let bundle: String
         switch session.hostApp ?? "" {
         case "Apple_Terminal": bundle = "com.apple.Terminal"
@@ -199,16 +277,11 @@ final class AgentCenter: ObservableObject {
         case "vscode": bundle = "com.microsoft.VSCode"
         case "WarpTerminal": bundle = "dev.warp.Warp-Stable"
         case "ghostty": bundle = "com.mitchellh.ghostty"
-        case "Xcode": bundle = "com.apple.dt.Xcode"
-        case "claude-desktop", "": bundle = session.tool == .claude ? "com.anthropic.claudefordesktop" : "com.apple.Terminal"
+        case "claude-desktop", "": bundle = session.tool == .codex ? "com.openai.codex" : (session.tool == .claude ? "com.anthropic.claudefordesktop" : "com.apple.Terminal")
         default: bundle = "com.apple.Terminal"
         }
         if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundle) {
             NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
-        }
-        if session.state == .attention || !session.isActive {
-            // Looking at it counts as acknowledging it.
-            if !session.isActive { dismiss(session) }
         }
     }
 }

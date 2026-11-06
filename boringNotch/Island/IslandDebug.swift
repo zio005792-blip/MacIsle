@@ -95,6 +95,11 @@ enum IslandDebug {
                 fakeMouse = NSPoint(x: w.frame.midX + v[0], y: w.frame.maxY - v[1])
             }
             log("fake mouse \(String(describing: fakeMouse)) state=\(vm.notchState)")
+        case "reveal":
+            if let first = AgentCenter.shared.sessions.first {
+                log("reveal \(first.id) jump=\(first.jumpURL?.absoluteString ?? "-") tty=\(first.tty ?? "-")")
+                AgentCenter.shared.reveal(first)
+            }
         case "state":
             log("state=\(vm.notchState)")
         case "notch":

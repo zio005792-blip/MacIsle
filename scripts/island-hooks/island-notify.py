@@ -8,9 +8,40 @@ Usage:
 """
 import json, os, subprocess, sys, urllib.parse
 
-def send(**params):
+def find_tty():
+    """The terminal tab this hook belongs to: walk up the process tree to the first process with a tty."""
+    pid = os.getppid()
+    for _ in range(8):
+        try:
+            out = subprocess.run(["/bin/ps", "-o", "tty=,ppid=", "-p", str(pid)], capture_output=True, text=True).stdout.split()
+        except Exception:
+            return ""
+        if len(out) < 2:
+            return ""
+        tty, ppid = out[0], out[1]
+        if tty not in ("??", "-", ""):
+            return "/dev/" + tty if not tty.startswith("/dev/") else tty
+        pid = int(ppid)
+        if pid <= 1:
+            break
+    return ""
+
+def location(thread=""):
+    """Where to jump when the task is clicked: a deep link (desktop apps) or a terminal tty."""
+    host_session = os.environ.get("CLAUDE_CODE_HOST_SESSION_ID", "")
+    if host_session.startswith("local_"):
+        return {"jump": f"claude://code/continue?session={host_session}&source=macisle"}
+    if thread and not os.environ.get("TERM_PROGRAM"):
+        return {"jump": f"codex://threads/{thread}"}
+    return {"tty": find_tty()}
+
+def send(thread="", **params):
     params = {k: str(v) for k, v in params.items() if v not in (None, "")}
     params.setdefault("app", os.environ.get("TERM_PROGRAM", "") or ("claude-desktop" if os.environ.get("CLAUDE_CODE_ENTRYPOINT") == "claude-desktop" else ""))
+    # Where a click on this task should take you.
+    for k, v in location(thread).items():
+        if v:
+            params.setdefault(k, v)
     url = "macisle://agent?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
     subprocess.run(["/usr/bin/open", "-g", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -78,7 +109,8 @@ def codex(args):
         return
     cwd = data.get("cwd") or os.getcwd()
     title = os.path.basename(cwd.rstrip("/")) or "Codex"
-    send(tool="codex", event="done", id=title, title=title, detail=short(data.get("last-assistant-message", ""), 30))
+    send(tool="codex", event="done", id=title, title=title, detail=short(data.get("last-assistant-message", ""), 30),
+         thread=data.get("thread-id", ""))
 
 def shell(args):
     event, title = (args + ["done", "命令"])[:2]
