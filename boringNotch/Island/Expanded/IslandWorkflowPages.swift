@@ -18,12 +18,12 @@ struct IslandAgentsPage: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("AI 任务")
+                Text(tr("AI 任务", "AI Tasks"))
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.55))
                 Spacer()
                 if agents.sessions.contains(where: { !$0.isActive }) {
-                    Button("清除已完成") {
+                    Button(tr("清除已完成", "Clear Finished")) {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { agents.clearFinished() }
                     }
                     .buttonStyle(.plain)
@@ -82,7 +82,7 @@ struct IslandAgentsPage: View {
         }
         .buttonStyle(IslandPressStyle())
         .contextMenu {
-            Button("移除") { agents.dismiss(s) }
+            Button(tr("移除", "Remove")) { agents.dismiss(s) }
         }
     }
 
@@ -108,7 +108,7 @@ struct IslandScreensPage: View {
             dropZone
                 .frame(width: 128)
             VStack(alignment: .leading, spacing: 7) {
-                Text("导出尺寸")
+                Text(tr("导出尺寸", "Export sizes"))
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.55))
                 let columns = [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)]
@@ -118,7 +118,7 @@ struct IslandScreensPage: View {
                     }
                 }
                 Spacer(minLength: 0)
-                Text(store.lastResult ?? "导出到「下载」· 无透明 PNG")
+                Text(store.lastResult ?? tr("导出到「下载」· 无透明 PNG", "Exports to Downloads · opaque PNG"))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.white.opacity(store.lastResult == nil ? 0.35 : 0.7))
                     .lineLimit(1)
@@ -140,10 +140,10 @@ struct IslandScreensPage: View {
                         .foregroundStyle(targeted ? Color.accentColor : .white.opacity(0.7))
                         .symbolEffect(.bounce, value: targeted)
                 }
-                Text(targeted ? "松手开始转换" : "拖入截图")
+                Text(targeted ? tr("松手开始转换", "Release to convert") : tr("拖入截图", "Drop screenshots"))
                     .font(.system(size: 11.5, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.85))
-                Text("或点击选择")
+                Text(tr("或点击选择", "or click to choose"))
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.white.opacity(0.4))
             }

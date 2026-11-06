@@ -16,15 +16,22 @@ def send(**params):
 
 STATE_DIR = os.path.expanduser("~/.macisle/state")
 
-def changed(session, event):
-    """True if this session's last reported event differs (dedupes per-tool hooks)."""
+def changed(session, event, heartbeat=60):
+    """True if this session's last reported event differs, or the last report is older than
+    `heartbeat` seconds (so a long-running task keeps proving it's alive)."""
+    import time
     try:
         os.makedirs(STATE_DIR, exist_ok=True)
         path = os.path.join(STATE_DIR, "".join(c for c in session if c.isalnum() or c in "-_")[:80] or "default")
-        last = open(path).read() if os.path.exists(path) else ""
-        if last == event:
+        last, ts = "", 0.0
+        if os.path.exists(path):
+            parts = open(path).read().split("|")
+            last = parts[0]
+            ts = float(parts[1]) if len(parts) > 1 else 0.0
+        now = time.time()
+        if last == event and now - ts < heartbeat:
             return False
-        open(path, "w").write(event)
+        open(path, "w").write(f"{event}|{now}")
     except Exception:
         pass
     return True

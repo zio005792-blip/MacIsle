@@ -22,7 +22,7 @@ enum AgentTool: String, Equatable {
         switch self {
         case .claude: return "Claude Code"
         case .codex: return "Codex"
-        case .shell: return "终端"
+        case .shell: return tr("终端", "Terminal")
         }
     }
 
@@ -66,10 +66,10 @@ struct AgentSession: Identifiable, Equatable {
 
     var stateText: String {
         switch state {
-        case .working: return "运行中"
-        case .attention: return "等你确认"
-        case .done: return "已完成"
-        case .failed: return "失败"
+        case .working: return tr("运行中", "Running")
+        case .attention: return tr("等你确认", "Needs you")
+        case .done: return tr("已完成", "Done")
+        case .failed: return tr("失败", "Failed")
         }
     }
 }
@@ -172,6 +172,9 @@ final class AgentCenter: ObservableObject {
 
     private func sweep(_ now: Date) {
         sessions.removeAll { s in
+            // A running Claude task reports at least once a minute while it works; silence for
+            // 10 minutes means it was interrupted (usage limit, closed window…) without a Stop.
+            (s.state == .working && s.tool == .claude && now.timeIntervalSince(s.updatedAt) > 10 * 60) ||
             (s.isActive && now.timeIntervalSince(s.updatedAt) > 3 * 3600) ||
             (!s.isActive && now.timeIntervalSince(s.endedAt ?? s.updatedAt) > 12 * 3600)
         }

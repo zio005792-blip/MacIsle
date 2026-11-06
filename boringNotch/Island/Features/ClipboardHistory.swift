@@ -30,9 +30,9 @@ struct ClipboardItem: Identifiable, Equatable {
             return s.trimmingCharacters(in: .whitespacesAndNewlines)
                 .replacingOccurrences(of: "\n", with: " ")
         case .image:
-            return "图片"
+            return tr("图片", "Image")
         case .files(let urls):
-            return urls.count == 1 ? urls[0].lastPathComponent : "\(urls.count) 个文件"
+            return urls.count == 1 ? urls[0].lastPathComponent : tr("\(urls.count) 个文件", "\(urls.count) files")
         }
     }
 

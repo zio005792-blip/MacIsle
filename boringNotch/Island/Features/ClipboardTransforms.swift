@@ -26,18 +26,18 @@ enum ClipboardTransforms {
            let obj = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]) {
             if let pretty = try? JSONSerialization.data(withJSONObject: obj, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]),
                let s = String(data: pretty, encoding: .utf8), s != text {
-                out.append(.init(id: "json.pretty", title: "格式化 JSON", result: s))
+                out.append(.init(id: "json.pretty", title: tr("格式化 JSON", "Format JSON"), result: s))
             }
             if let mini = try? JSONSerialization.data(withJSONObject: obj, options: [.withoutEscapingSlashes]),
                let s = String(data: mini, encoding: .utf8), s != text {
-                out.append(.init(id: "json.mini", title: "压缩 JSON", result: s))
+                out.append(.init(id: "json.mini", title: tr("压缩 JSON", "Minify JSON"), result: s))
             }
         }
 
         // JWT payload
         let parts = text.split(separator: ".")
         if parts.count == 3, text.hasPrefix("eyJ"), let payload = base64URLDecode(String(parts[1])) {
-            out.append(.init(id: "jwt", title: "JWT 内容", result: payload))
+            out.append(.init(id: "jwt", title: tr("JWT 内容", "JWT payload"), result: payload))
         }
 
         // Unix timestamp (seconds or milliseconds)
@@ -51,12 +51,12 @@ enum ClipboardTransforms {
 
         // Date → timestamp
         if text.count <= 25, let date = parseDate(text) {
-            out.append(.init(id: "date.ts", title: "→ 时间戳", result: String(Int(date.timeIntervalSince1970))))
+            out.append(.init(id: "date.ts", title: tr("→ 时间戳", "→ timestamp"), result: String(Int(date.timeIntervalSince1970))))
         }
 
         // URL decode
         if text.contains("%"), let decoded = text.removingPercentEncoding, decoded != text {
-            out.append(.init(id: "url.decode", title: "URL 解码", result: decoded))
+            out.append(.init(id: "url.decode", title: tr("URL 解码", "URL decode"), result: decoded))
         }
 
         // Base64
@@ -64,7 +64,7 @@ enum ClipboardTransforms {
            text.range(of: "^[A-Za-z0-9+/]+={0,2}$", options: .regularExpression) != nil,
            let data = Data(base64Encoded: text), let s = String(data: data, encoding: .utf8),
            s.unicodeScalars.allSatisfy({ !CharacterSet.controlCharacters.contains($0) || $0 == "\n" || $0 == "\t" }) {
-            out.append(.init(id: "b64.decode", title: "Base64 解码", result: s))
+            out.append(.init(id: "b64.decode", title: tr("Base64 解码", "Base64 decode"), result: s))
         } else if text.count <= 2000, !text.contains("\n") {
             out.append(.init(id: "b64.encode", title: "Base64", result: Data(text.utf8).base64EncodedString()))
         }

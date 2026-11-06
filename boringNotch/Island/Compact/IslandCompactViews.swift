@@ -72,7 +72,7 @@ struct IslandCompactContent: View {
                 } trailing: {
                     Group {
                         if session.state == .attention {
-                            Text("确认")
+                            Text(tr("确认", "Review"))
                                 .font(.system(size: 11.5, weight: .bold))
                                 .foregroundStyle(Color.orange)
                                 .islandBreathing()
@@ -166,7 +166,7 @@ struct IslandCompactContent: View {
             .padding(.leading, 4)
         } trailing: {
             if kind == .mic {
-                Text(value > 0 ? "已开启" : "已静音")
+                Text(value > 0 ? tr("已开启", "On") : tr("已静音", "Muted"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(value > 0 ? .white : .red)
             } else {
@@ -213,7 +213,7 @@ struct IslandCompactContent: View {
                     Image(systemName: plugged ? "bolt.fill" : "powerplug.portrait")
                         .font(.system(size: 11.5, weight: .bold))
                         .symbolEffect(.bounce, value: plugged)
-                    Text(plugged ? "充电中" : "使用电池")
+                    Text(plugged ? tr("充电中", "Charging") : tr("使用电池", "On battery"))
                         .font(.system(size: 11.5, weight: .semibold))
                 }
                 .foregroundStyle(plugged ? Color.green : Color.white)
@@ -257,7 +257,7 @@ struct IslandCompactContent: View {
                 }
                 .frame(width: size.height - 22, height: size.height - 22)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(kind == .focus ? "专注完成" : (kind == .rest ? "休息结束" : "计时结束"))
+                    Text(kind == .focus ? tr("专注完成", "Focus done") : (kind == .rest ? tr("休息结束", "Break over") : tr("计时结束", "Timer done")))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white)
                     Text(timerDoneSubtitle(kind))
@@ -304,10 +304,10 @@ struct IslandCompactContent: View {
                 }
                 .frame(width: size.height - 24, height: size.height - 24)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("资料识别完成")
+                    Text(tr("资料识别完成", "Dossier ready"))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white)
-                    Text(pending > 0 ? "\(dossier.documents.count) 份 · \(pending) 项信息不一致，点开确认" : "\(dossier.documents.count) 份 · 关键信息一致，可生成文档")
+                    Text(pending > 0 ? tr("\(dossier.documents.count) 份 · \(pending) 项信息不一致，点开确认", "\(dossier.documents.count) files · \(pending) mismatches, tap to review") : tr("\(dossier.documents.count) 份 · 关键信息一致，可生成文档", "\(dossier.documents.count) files · key facts match, ready to export"))
                         .font(.system(size: 11.5, weight: .medium))
                         .foregroundStyle(.white.opacity(0.55))
                 }
@@ -322,7 +322,7 @@ struct IslandCompactContent: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 12, weight: .bold))
                         .symbolEffect(.bounce, value: ui.copiedPreview)
-                    Text("已复制").font(.system(size: 11.5, weight: .semibold))
+                    Text(tr("已复制", "Copied")).font(.system(size: 11.5, weight: .semibold))
                 }
                 .foregroundStyle(.green)
             } trailing: {
@@ -338,18 +338,18 @@ struct IslandCompactContent: View {
 
     private func agentHeadline(_ s: AgentSession) -> String {
         switch s.state {
-        case .attention: return "\(s.tool.name) 等你确认"
-        case .done: return s.tool == .shell ? "命令已完成" : "\(s.tool.name) 已完成"
-        case .failed: return s.tool == .shell ? "命令失败" : "\(s.tool.name) 出错了"
-        case .working: return "\(s.tool.name) 运行中"
+        case .attention: return tr("\(s.tool.name) 等你确认", "\(s.tool.name) needs you")
+        case .done: return s.tool == .shell ? tr("命令已完成", "Command finished") : tr("\(s.tool.name) 已完成", "\(s.tool.name) finished")
+        case .failed: return s.tool == .shell ? tr("命令失败", "Command failed") : tr("\(s.tool.name) 出错了", "\(s.tool.name) failed")
+        case .working: return tr("\(s.tool.name) 运行中", "\(s.tool.name) running")
         }
     }
 
     private func timerDoneSubtitle(_ kind: IslandTimer.Kind) -> String {
         switch kind {
-        case .focus: return timer.autoContinue ? "开始休息 \(timer.restMinutes) 分钟" : "今天已完成 \(timer.focusCount) 个番茄"
-        case .rest: return timer.autoContinue ? "开始新一轮专注" : "准备好了就继续吧"
-        case .countdown: return "时间到"
+        case .focus: return timer.autoContinue ? tr("开始休息 \(timer.restMinutes) 分钟", "Starting a \(timer.restMinutes)-minute break") : tr("今天已完成 \(timer.focusCount) 个番茄", "\(timer.focusCount) pomodoros today")
+        case .rest: return timer.autoContinue ? tr("开始新一轮专注", "Starting a new focus round") : tr("准备好了就继续吧", "Continue when you're ready")
+        case .countdown: return tr("时间到", "Time's up")
         }
     }
 

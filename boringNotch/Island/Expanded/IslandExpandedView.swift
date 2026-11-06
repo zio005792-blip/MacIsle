@@ -46,7 +46,7 @@ struct IslandExpandedView: View {
             if let hint = ui.hint {
                 HStack(spacing: 4) {
                     Image(systemName: "sparkles").font(.system(size: 8.5, weight: .bold))
-                    Text("猜你想用 · \(hint)").font(.system(size: 9.5, weight: .semibold))
+                    Text(tr("猜你想用 · \(hint)", "Picked for you · \(hint)")).font(.system(size: 9.5, weight: .semibold))
                 }
                 .foregroundStyle(Color.accentColor)
                 .padding(.horizontal, 7)

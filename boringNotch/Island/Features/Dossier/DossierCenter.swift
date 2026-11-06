@@ -72,8 +72,8 @@ final class DossierCenter: ObservableObject {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.message = "选择要整理的客户资料文件夹"
-        panel.prompt = "开始整理"
+        panel.message = tr("选择要整理的客户资料文件夹", "Choose a client folder to process")
+        panel.prompt = tr("开始整理", "Start")
         let response = panel.runModal()
         NSApp.setActivationPolicy(.accessory)
         if response == .OK, let url = panel.url { start(folder: url) }
@@ -101,7 +101,7 @@ final class DossierCenter: ObservableObject {
         diff = nil
         redactedFolder = nil
         startedAt = .now
-        phase = .scanning(done: 0, total: 0, current: "正在查找文件…")
+        phase = .scanning(done: 0, total: 0, current: tr("正在查找文件…", "Finding files…"))
 
         let root = isDir.boolValue ? folder : folder.deletingLastPathComponent()
         let single = isDir.boolValue ? nil : folder
@@ -110,7 +110,7 @@ final class DossierCenter: ObservableObject {
             defer { if access { folder.stopAccessingSecurityScopedResource() } }
             let files = single.map { [$0] } ?? DossierExtractor.collectFiles(in: root)
             guard !files.isEmpty else {
-                await self?.fail("文件夹里没有可识别的图片、PDF 或文档")
+                await self?.fail(tr("文件夹里没有可识别的图片、PDF 或文档", "No images, PDFs or documents found in this folder"))
                 return
             }
             var results: [DossierDocument] = []
@@ -140,7 +140,7 @@ final class DossierCenter: ObservableObject {
                 hits: DossierExtractor.extractHits(from: r.text),
                 dates: DossierExtractor.extractDates(from: r.text),
                 amounts: DossierExtractor.extractAmounts(from: r.text),
-                error: r.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "未识别到文字" : nil)
+                error: r.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? tr("未识别到文字", "No text recognised") : nil)
         } catch {
             return DossierDocument(id: UUID(), relativePath: relativePath, category: .other, text: "", pageCount: 0,
                                    usedOCR: false, hits: [], dates: [], amounts: [], error: error.localizedDescription)
@@ -210,9 +210,9 @@ final class DossierCenter: ObservableObject {
         defer { if access { folderURL?.stopAccessingSecurityScopedResource() } }
         do {
             let html = DossierReport.html(reportContext, masked: true)
-            let report = try DossierReport.writeDocx(html: html, folder: folderName, suffix: "打码版")
+            let report = try DossierReport.writeDocx(html: html, folder: folderName, suffix: tr("打码版", "Redacted"))
             let dir = report.deletingLastPathComponent()
-                .appendingPathComponent(report.deletingPathExtension().lastPathComponent + " 附件", isDirectory: true)
+                .appendingPathComponent(report.deletingPathExtension().lastPathComponent + tr(" 附件", " attachments"), isDirectory: true)
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             var isDir: ObjCBool = false
             let root: URL? = folderURL.flatMap { FileManager.default.fileExists(atPath: $0.path, isDirectory: &isDir) && isDir.boolValue ? $0 : $0.deletingLastPathComponent() }
@@ -224,7 +224,7 @@ final class DossierCenter: ObservableObject {
             phase = .finished(report)
             NSWorkspace.shared.activateFileViewerSelecting([report, dir])
         } catch {
-            phase = .failed("生成打码版失败：\(error.localizedDescription)")
+            phase = .failed(tr("生成打码版失败：\(error.localizedDescription)", "Redacted export failed: \(error.localizedDescription)"))
         }
     }
 
@@ -237,7 +237,7 @@ final class DossierCenter: ObservableObject {
             phase = .finished(url)
             NSWorkspace.shared.activateFileViewerSelecting([url])
         } catch {
-            phase = .failed("生成文档失败：\(error.localizedDescription)")
+            phase = .failed(tr("生成文档失败：\(error.localizedDescription)", "Report failed: \(error.localizedDescription)"))
         }
     }
 

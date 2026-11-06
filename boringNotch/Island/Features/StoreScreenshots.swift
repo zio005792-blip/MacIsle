@@ -19,12 +19,12 @@ struct StoreDevice: Identifiable, Hashable {
     let portrait: CGSize
 
     static let all: [StoreDevice] = [
-        StoreDevice(id: "iphone69", name: "iPhone 6.9 英寸", short: "6.9″", portrait: CGSize(width: 1320, height: 2868)),
-        StoreDevice(id: "iphone65", name: "iPhone 6.5 英寸", short: "6.5″", portrait: CGSize(width: 1284, height: 2778)),
-        StoreDevice(id: "iphone63", name: "iPhone 6.3 英寸", short: "6.3″", portrait: CGSize(width: 1206, height: 2622)),
-        StoreDevice(id: "iphone55", name: "iPhone 5.5 英寸", short: "5.5″", portrait: CGSize(width: 1242, height: 2208)),
-        StoreDevice(id: "ipad13", name: "iPad 13 英寸", short: "iPad 13″", portrait: CGSize(width: 2064, height: 2752)),
-        StoreDevice(id: "ipad129", name: "iPad 12.9 英寸", short: "iPad 12.9″", portrait: CGSize(width: 2048, height: 2732)),
+        StoreDevice(id: "iphone69", name: tr("iPhone 6.9 英寸", "iPhone 6.9-inch"), short: "6.9″", portrait: CGSize(width: 1320, height: 2868)),
+        StoreDevice(id: "iphone65", name: tr("iPhone 6.5 英寸", "iPhone 6.5-inch"), short: "6.5″", portrait: CGSize(width: 1284, height: 2778)),
+        StoreDevice(id: "iphone63", name: tr("iPhone 6.3 英寸", "iPhone 6.3-inch"), short: "6.3″", portrait: CGSize(width: 1206, height: 2622)),
+        StoreDevice(id: "iphone55", name: tr("iPhone 5.5 英寸", "iPhone 5.5-inch"), short: "5.5″", portrait: CGSize(width: 1242, height: 2208)),
+        StoreDevice(id: "ipad13", name: tr("iPad 13 英寸", "iPad 13-inch"), short: "iPad 13″", portrait: CGSize(width: 2064, height: 2752)),
+        StoreDevice(id: "ipad129", name: tr("iPad 12.9 英寸", "iPad 12.9-inch"), short: "iPad 12.9″", portrait: CGSize(width: 2048, height: 2732)),
     ]
 }
 
@@ -56,7 +56,7 @@ final class StoreScreenshots: ObservableObject {
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.allowedContentTypes = [.png, .jpeg, .heic, .tiff]
-        panel.message = "选择要转换成 App Store 尺寸的截图"
+        panel.message = tr("选择要转换成 App Store 尺寸的截图", "Choose screenshots to convert to App Store sizes")
         let response = panel.runModal()
         NSApp.setActivationPolicy(.accessory)
         if response == .OK { process(panel.urls) }
@@ -84,7 +84,7 @@ final class StoreScreenshots: ObservableObject {
     func process(_ urls: [URL]) {
         let images = urls.filter { ["png", "jpg", "jpeg", "heic", "tiff", "tif"].contains($0.pathExtension.lowercased()) }
         guard !images.isEmpty else {
-            lastResult = "没有可用的图片"
+            lastResult = tr("没有可用的图片", "No usable images")
             return
         }
         let devices = StoreDevice.all.filter { selected.contains($0.id) }
@@ -94,7 +94,7 @@ final class StoreScreenshots: ObservableObject {
         Task.detached(priority: .userInitiated) {
             let downloads = (FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
                 ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Downloads")).resolvingSymlinksInPath()
-            let root = downloads.appendingPathComponent("App Store 截图", isDirectory: true)
+            let root = downloads.appendingPathComponent(tr("App Store 截图", "App Store Screenshots"), isDirectory: true)
             var written = 0
             var failures = 0
             for device in devices {
@@ -111,9 +111,9 @@ final class StoreScreenshots: ObservableObject {
                 self.isWorking = false
                 self.lastOutputFolder = root
                 self.lastResult = failures == 0
-                    ? "已生成 \(written) 张 · \(devices.count) 种尺寸"
-                    : "已生成 \(written) 张，\(failures) 张失败"
-                IslandUIState.shared.flash(.copied("截图已导出到下载"), duration: 2)
+                    ? tr("已生成 \(written) 张 · \(devices.count) 种尺寸", "Exported \(written) images · \(devices.count) sizes")
+                    : tr("已生成 \(written) 张，\(failures) 张失败", "Exported \(written), \(failures) failed")
+                IslandUIState.shared.flash(.copied(tr("截图已导出到下载", "Screenshots saved to Downloads")), duration: 2)
                 if written > 0 { NSWorkspace.shared.activateFileViewerSelecting([root]) }
             }
         }

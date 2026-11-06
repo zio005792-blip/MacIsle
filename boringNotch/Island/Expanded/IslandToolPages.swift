@@ -53,7 +53,7 @@ struct IslandTimerPage: View {
                                 .fill(i < timer.focusCount % 4 ? IslandTimer.Kind.focus.tint : Color.white.opacity(0.15))
                                 .frame(width: 6, height: 6)
                         }
-                        Text("今日 \(timer.focusCount) 个")
+                        Text(tr("今日 \(timer.focusCount) 个", "\(timer.focusCount) today"))
                             .font(.system(size: 10.5, weight: .medium))
                             .foregroundStyle(.white.opacity(0.5))
                             .padding(.leading, 3)
@@ -69,8 +69,8 @@ struct IslandTimerPage: View {
                     }
                 }
                 HStack(spacing: 6) {
-                    Button("+1 分") { timer.add(seconds: 60) }
-                    Button("+5 分") { timer.add(seconds: 300) }
+                    Button(tr("+1 分", "+1 min")) { timer.add(seconds: 60) }
+                    Button(tr("+5 分", "+5 min")) { timer.add(seconds: 300) }
                 }
                 .buttonStyle(IslandPillButtonStyle())
             }
@@ -94,7 +94,7 @@ struct IslandTimerPage: View {
                             .foregroundStyle(IslandTimer.Kind.focus.tint)
                     }
                     .frame(width: 66, height: 66)
-                    Text("番茄钟 \(timer.focusMinutes)′")
+                    Text(tr("番茄钟 \(timer.focusMinutes)′", "Pomodoro \(timer.focusMinutes)′"))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
                 }
@@ -112,7 +112,7 @@ struct IslandTimerPage: View {
                             Text("\(m)")
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                                 .foregroundStyle(IslandTimer.Kind.countdown.tint)
-                            Text("分")
+                            Text(tr("分", "min"))
                                 .font(.system(size: 10, weight: .medium))
                                 .foregroundStyle(.white.opacity(0.45))
                         }
@@ -142,7 +142,7 @@ struct IslandSystemPage: View {
             tile(title: "CPU", value: "\(Int((monitor.cpu * 100).rounded()))%", tint: .cyan) {
                 IslandSparkline(values: monitor.cpuHistory, maxValue: 1, tint: .cyan)
             }
-            tile(title: "内存", value: monitor.memoryUsed.islandBytes, tint: .purple) {
+            tile(title: tr("内存", "Memory"), value: monitor.memoryUsed.islandBytes, tint: .purple) {
                 VStack(alignment: .leading, spacing: 6) {
                     Spacer(minLength: 0)
                     GeometryReader { geo in
@@ -154,12 +154,12 @@ struct IslandSystemPage: View {
                         }
                     }
                     .frame(height: 8)
-                    Text("共 \(monitor.memoryTotal.islandBytes) · \(Int(monitor.memoryFraction * 100))%")
+                    Text(tr("共 \(monitor.memoryTotal.islandBytes) · \(Int(monitor.memoryFraction * 100))%", "of \(monitor.memoryTotal.islandBytes) · \(Int(monitor.memoryFraction * 100))%"))
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.white.opacity(0.5))
                 }
             }
-            tile(title: "网络", value: "↓ " + monitor.downBytesPerSec.islandRate, tint: .green) {
+            tile(title: tr("网络", "Network"), value: "↓ " + monitor.downBytesPerSec.islandRate, tint: .green) {
                 VStack(alignment: .leading, spacing: 2) {
                     ZStack {
                         IslandSparkline(values: monitor.downHistory, maxValue: nil, tint: .green)
@@ -244,23 +244,23 @@ struct IslandClipboardPage: View {
     var body: some View {
         Group {
             if !history.isEnabled {
-                placeholder(title: "剪贴板历史已关闭") {
-                    Button("开启") { history.isEnabled = true }.buttonStyle(IslandPillButtonStyle())
+                placeholder(title: tr("剪贴板历史已关闭", "Clipboard history is off")) {
+                    Button(tr("开启", "Turn On")) { history.isEnabled = true }.buttonStyle(IslandPillButtonStyle())
                 }
             } else if history.items.isEmpty {
-                placeholder(title: "复制的内容会出现在这里") {
-                    Text("只存在内存里 · 密码管理器的内容会自动跳过")
+                placeholder(title: tr("复制的内容会出现在这里", "Things you copy will appear here")) {
+                    Text(tr("只存在内存里 · 密码管理器的内容会自动跳过", "Kept in memory only · password-manager items are skipped"))
                         .font(.system(size: 10.5, weight: .medium))
                         .foregroundStyle(.white.opacity(0.4))
                 }
             } else {
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
-                        Text("剪贴板 · 点击复制")
+                        Text(tr("剪贴板 · 点击复制", "Clipboard · click to copy"))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(.white.opacity(0.55))
                         Spacer()
-                        Button("清空") {
+                        Button(tr("清空", "Clear")) {
                             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { history.clear() }
                         }
                         .buttonStyle(.plain)
@@ -332,7 +332,7 @@ struct IslandClipboardPage: View {
         .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .onTapGesture { history.copy(item) }
         .onHover { h in withAnimation(.easeOut(duration: 0.12)) { hovered = h ? item.id : (hovered == item.id ? nil : hovered) } }
-        .contextMenu { Button("删除") { history.remove(item) } }
+        .contextMenu { Button(tr("删除", "Delete")) { history.remove(item) } }
     }
 
     private func placeholder<Extra: View>(title: String, @ViewBuilder extra: () -> Extra) -> some View {

@@ -56,33 +56,33 @@ final class IslandSelfCheck: ObservableObject {
 
     private func checkWindow() -> SelfCheckItem {
         let windows = NSApp.windows.compactMap { $0 as? BoringNotchSkyLightWindow }
-        guard let w = windows.first else { return .init(name: "灵动岛窗口", status: .fail, detail: "没有找到窗口，请重启应用") }
-        let screen = w.screen?.localizedName ?? "未知屏幕"
-        return .init(name: "灵动岛窗口", status: w.alphaValue > 0 ? .ok : .warn,
-                     detail: w.alphaValue > 0 ? "显示在「\(screen)」" : "窗口被隐藏（可能在全屏应用中）")
+        guard let w = windows.first else { return .init(name: tr("灵动岛窗口", "Island window"), status: .fail, detail: tr("没有找到窗口，请重启应用", "Window not found — please restart the app")) }
+        let screen = w.screen?.localizedName ?? tr("未知屏幕", "unknown display")
+        return .init(name: tr("灵动岛窗口", "Island window"), status: w.alphaValue > 0 ? .ok : .warn,
+                     detail: w.alphaValue > 0 ? tr("显示在「\(screen)」", "Showing on “\(screen)”") : tr("窗口被隐藏（可能在全屏应用中）", "Window hidden (probably a full-screen app)"))
     }
 
     private func checkURLScheme() -> SelfCheckItem {
         guard let url = URL(string: "macisle://agent"),
               let handler = NSWorkspace.shared.urlForApplication(toOpen: url) else {
-            return .init(name: "AI 任务通道", status: .fail, detail: "macisle:// 没有注册，重新安装应用即可")
+            return .init(name: tr("AI 任务通道", "AI task channel"), status: .fail, detail: tr("macisle:// 没有注册，重新安装应用即可", "macisle:// isn't registered — reinstall the app"))
         }
         let mine = Bundle.main.bundleURL.resolvingSymlinksInPath().path
         let theirs = handler.resolvingSymlinksInPath().path
-        if mine == theirs { return .init(name: "AI 任务通道", status: .ok, detail: "macisle:// 指向当前应用") }
-        return .init(name: "AI 任务通道", status: .warn,
-                     detail: "链接会被发给另一份副本：\(theirs)。删除那份或重新安装当前版本")
+        if mine == theirs { return .init(name: tr("AI 任务通道", "AI task channel"), status: .ok, detail: tr("macisle:// 指向当前应用", "macisle:// points to this app")) }
+        return .init(name: tr("AI 任务通道", "AI task channel"), status: .warn,
+                     detail: tr("链接会被发给另一份副本：\(theirs)。删除那份或重新安装当前版本", "Links go to another copy: \(theirs). Delete it or reinstall this version"))
     }
 
     private func checkAgentHooks() -> SelfCheckItem {
         guard let last = AgentCenter.shared.lastEventAt else {
-            return .init(name: "Claude / Codex / 终端接入", status: .warn,
-                         detail: "还没收到过事件：新开一个终端窗口运行 claude 或 codex 试试")
+            return .init(name: tr("Claude / Codex / 终端接入", "Claude / Codex / terminal hooks"), status: .warn,
+                         detail: tr("还没收到过事件：新开一个终端窗口运行 claude 或 codex 试试", "No events yet — run claude or codex in a new terminal window"))
         }
         let f = RelativeDateTimeFormatter()
-        f.locale = Locale(identifier: "zh_CN")
-        return .init(name: "Claude / Codex / 终端接入", status: .ok,
-                     detail: "最近一次收到事件：\(f.localizedString(for: last, relativeTo: .now))（\(AgentCenter.shared.lastEventTool ?? "")）")
+        f.locale = IslandLanguage.locale
+        return .init(name: tr("Claude / Codex / 终端接入", "Claude / Codex / terminal hooks"), status: .ok,
+                     detail: tr("最近一次收到事件：\(f.localizedString(for: last, relativeTo: .now))（\(AgentCenter.shared.lastEventTool ?? "")）", "Last event: \(f.localizedString(for: last, relativeTo: .now)) (\(AgentCenter.shared.lastEventTool ?? ""))"))
     }
 
     private func checkOCR() async -> SelfCheckItem {
@@ -99,24 +99,24 @@ final class IslandSelfCheck: ObservableObject {
             return try? DossierExtractor.ocr(cg)
         }.value
         let ms = Int(Date.now.timeIntervalSince(started) * 1000)
-        guard let text = result else { return .init(name: "OCR 识别", status: .fail, detail: "Vision 识别失败") }
+        guard let text = result else { return .init(name: tr("OCR 识别", "OCR"), status: .fail, detail: tr("Vision 识别失败", "Vision text recognition failed")) }
         let ok = text.contains("2026") && (text.contains("灵动") || text.contains("自检"))
-        return .init(name: "OCR 识别", status: ok ? .ok : .warn,
-                     detail: ok ? "中文识别正常（\(ms) 毫秒）" : "识别结果不完整：\(text.prefix(30))")
+        return .init(name: tr("OCR 识别", "OCR"), status: ok ? .ok : .warn,
+                     detail: ok ? tr("中文识别正常（\(ms) 毫秒）", "Chinese text recognised (\(ms) ms)") : tr("识别结果不完整：\(text.prefix(30))", "Incomplete result: \(text.prefix(30))"))
     }
 
     private func checkCalendar() -> SelfCheckItem {
         switch EKEventStore.authorizationStatus(for: .event) {
-        case .fullAccess: return .init(name: "日历权限", status: .ok, detail: "已授权，概览卡片会显示下一个日程")
-        case .notDetermined: return .init(name: "日历权限", status: .warn, detail: "尚未授权：在概览卡片点「允许访问日历」")
-        default: return .init(name: "日历权限", status: .warn, detail: "被拒绝：系统设置 › 隐私与安全性 › 日历 里打开")
+        case .fullAccess: return .init(name: tr("日历权限", "Calendar access"), status: .ok, detail: tr("已授权，概览卡片会显示下一个日程", "Allowed — the Overview card shows your next event"))
+        case .notDetermined: return .init(name: tr("日历权限", "Calendar access"), status: .warn, detail: tr("尚未授权：在概览卡片点「允许访问日历」", "Not yet allowed: click “Allow Calendar Access” on the Overview card"))
+        default: return .init(name: tr("日历权限", "Calendar access"), status: .warn, detail: tr("被拒绝：系统设置 › 隐私与安全性 › 日历 里打开", "Denied — enable it in System Settings › Privacy & Security › Calendars"))
         }
     }
 
     private func checkAccessibility() async -> SelfCheckItem {
         let trusted = await XPCHelperClient.shared.isAccessibilityAuthorized()
-        return .init(name: "辅助功能（音量/亮度 HUD）", status: trusted ? .ok : .warn,
-                     detail: trusted ? "已授权" : "未授权：需要替换系统音量 / 亮度提示时再开启")
+        return .init(name: tr("辅助功能（音量/亮度 HUD）", "Accessibility (volume / brightness HUD)"), status: trusted ? .ok : .warn,
+                     detail: trusted ? tr("已授权", "Allowed") : tr("未授权：需要替换系统音量 / 亮度提示时再开启", "Not allowed — only needed to replace the volume / brightness HUD"))
     }
 
     private func checkDownloads() -> SelfCheckItem {
@@ -126,9 +126,9 @@ final class IslandSelfCheck: ObservableObject {
         do {
             try Data("ok".utf8).write(to: probe)
             try FileManager.default.removeItem(at: probe)
-            return .init(name: "「下载」文件夹", status: .ok, detail: "可写入（截图导出、资料整理文档）")
+            return .init(name: tr("「下载」文件夹", "Downloads folder"), status: .ok, detail: tr("可写入（截图导出、资料整理文档）", "Writable (screenshot export, dossier reports)"))
         } catch {
-            return .init(name: "「下载」文件夹", status: .fail, detail: "无法写入：\(error.localizedDescription)")
+            return .init(name: tr("「下载」文件夹", "Downloads folder"), status: .fail, detail: tr("无法写入：\(error.localizedDescription)", "Not writable: \(error.localizedDescription)"))
         }
     }
 
@@ -159,14 +159,14 @@ final class IslandSelfCheck: ObservableObject {
         let nudge = play([(3, 0), (3, 0)])
         let vertical = play(Array(repeating: (1, 9), count: 6))
         let ok = swipe == .next && nudge == .pass && vertical == .pass
-        return .init(name: "双指翻页", status: ok ? .ok : .fail,
-                     detail: ok ? "滑动翻页、轻碰回弹、上下滚动不误触均正常" : "手势判断异常（滑动=\(swipe) 轻碰=\(nudge) 上下=\(vertical)）")
+        return .init(name: tr("双指翻页", "Two-finger paging"), status: ok ? .ok : .fail,
+                     detail: ok ? tr("滑动翻页、轻碰回弹、上下滚动不误触均正常", "Swipe paging, nudge spring-back and vertical scrolling all behave correctly") : tr("手势判断异常（滑动=\(swipe) 轻碰=\(nudge) 上下=\(vertical)）", "Gesture check failed (swipe=\(swipe) nudge=\(nudge) vertical=\(vertical))"))
     }
 
     private func checkClipboard() -> SelfCheckItem {
         let c = ClipboardHistory.shared
-        return .init(name: "剪贴板记录", status: c.isEnabled ? .ok : .warn,
-                     detail: c.isEnabled ? "运行中，已记录 \(c.items.count) 条（只在内存）" : "已关闭")
+        return .init(name: tr("剪贴板记录", "Clipboard history"), status: c.isEnabled ? .ok : .warn,
+                     detail: c.isEnabled ? tr("运行中，已记录 \(c.items.count) 条（只在内存）", "Running, \(c.items.count) items (in memory only)") : tr("已关闭", "Off"))
     }
 
     private func checkPerformance() async -> SelfCheckItem {
@@ -187,8 +187,8 @@ final class IslandSelfCheck: ObservableObject {
         }
         let mb = kr == KERN_SUCCESS ? Double(info.phys_footprint) / 1_048_576 : 0
         let status: SelfCheckItem.Status = cpu < 3 && mb < 400 ? .ok : .warn
-        return .init(name: "性能", status: status,
-                     detail: String(format: "最近 3 秒 CPU %.1f%% · 内存 %.0f MB", cpu, mb))
+        return .init(name: tr("性能", "Performance"), status: status,
+                     detail: String(format: tr("最近 3 秒 CPU %.1f%% · 内存 %.0f MB", "Last 3 s CPU %.1f%% · memory %.0f MB"), cpu, mb))
     }
 }
 
@@ -209,18 +209,18 @@ struct IslandSelfCheckSection: View {
                 }
             }
             HStack {
-                Button(check.isRunning ? "检查中…" : "运行自检") { check.run() }
+                Button(check.isRunning ? tr("检查中…", "Checking…") : tr("运行自检", "Run Self-Check")) { check.run() }
                     .disabled(check.isRunning)
                 if check.isRunning { ProgressView().controlSize(.small) }
                 Spacer()
                 if let last = check.lastRun {
-                    Text("上次：\(last.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(.secondary)
+                    Text(tr("上次：\(last.formatted(date: .omitted, time: .shortened))", "Last run: \(last.formatted(date: .omitted, time: .shortened))")).font(.caption).foregroundStyle(.secondary)
                 }
             }
         } header: {
-            Text("自检")
+            Text(tr("自检", "Self-check"))
         } footer: {
-            Text("检查 AI 任务通道、OCR、权限、文件夹访问、手势判断和资源占用。").font(.caption).foregroundStyle(.secondary)
+            Text(tr("检查 AI 任务通道、OCR、权限、文件夹访问、手势判断和资源占用。", "Checks the AI task channel, OCR, permissions, folder access, gesture logic and resource usage.")).font(.caption).foregroundStyle(.secondary)
         }
     }
 

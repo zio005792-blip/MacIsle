@@ -20,9 +20,9 @@ final class IslandTimer: ObservableObject {
 
         var title: String {
             switch self {
-            case .countdown: return "计时器"
-            case .focus: return "专注"
-            case .rest: return "休息"
+            case .countdown: return tr("计时器", "Timer")
+            case .focus: return tr("专注", "Focus")
+            case .rest: return tr("休息", "Break")
             }
         }
 

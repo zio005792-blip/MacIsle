@@ -13,16 +13,16 @@ enum DossierCategory: String, CaseIterable, Codable {
 
     var title: String {
         switch self {
-        case .businessLicense: return "营业执照"
-        case .idCard: return "身份证件"
-        case .contract: return "合同协议"
-        case .authorization: return "授权 / 承诺函"
-        case .invoice: return "发票票据"
-        case .qualification: return "资质证书"
-        case .bank: return "银行 / 付款"
-        case .explanation: return "说明材料"
-        case .screenshot: return "截图 / 界面"
-        case .other: return "其他"
+        case .businessLicense: return tr("营业执照", "Business licence")
+        case .idCard: return tr("身份证件", "ID documents")
+        case .contract: return tr("合同协议", "Contracts")
+        case .authorization: return tr("授权 / 承诺函", "Authorisations")
+        case .invoice: return tr("发票票据", "Invoices")
+        case .qualification: return tr("资质证书", "Certificates")
+        case .bank: return tr("银行 / 付款", "Bank / payments")
+        case .explanation: return tr("说明材料", "Explanations")
+        case .screenshot: return tr("截图 / 界面", "Screenshots / UI")
+        case .other: return tr("其他", "Other")
         }
     }
 
@@ -71,28 +71,28 @@ enum DossierFieldKind: String, CaseIterable, Codable {
 
     var title: String {
         switch self {
-        case .entityName: return "主体名称"
-        case .creditCode: return "统一社会信用代码"
-        case .legalRep: return "法定代表人"
-        case .personName: return "联系人 / 姓名"
-        case .idNumber: return "身份证号"
-        case .phone: return "手机号"
-        case .email: return "邮箱"
-        case .address: return "地址"
-        case .appName: return "产品 / App 名称"
-        case .bankAccount: return "银行账号"
-        case .website: return "网址"
-        case .counterparty: return "合作方 / 乙方"
+        case .entityName: return tr("主体名称", "Entity name")
+        case .creditCode: return tr("统一社会信用代码", "Unified social credit code")
+        case .legalRep: return tr("法定代表人", "Legal representative")
+        case .personName: return tr("联系人 / 姓名", "Contact / name")
+        case .idNumber: return tr("身份证号", "ID number")
+        case .phone: return tr("手机号", "Mobile")
+        case .email: return tr("邮箱", "Email")
+        case .address: return tr("地址", "Address")
+        case .appName: return tr("产品 / App 名称", "Product / App name")
+        case .bankAccount: return tr("银行账号", "Bank account")
+        case .website: return tr("网址", "Website")
+        case .counterparty: return tr("合作方 / 乙方", "Counterparty")
         }
     }
 
     /// Compact label for the island card.
     var shortTitle: String {
         switch self {
-        case .creditCode: return "信用代码"
-        case .personName: return "联系人"
-        case .appName: return "App 名称"
-        case .counterparty: return "合作方"
+        case .creditCode: return tr("信用代码", "Credit code")
+        case .personName: return tr("联系人", "Contact")
+        case .appName: return tr("App 名称", "App name")
+        case .counterparty: return tr("合作方", "Counterparty")
         default: return title
         }
     }
@@ -187,9 +187,9 @@ enum DossierChecklistKind: String, CaseIterable, Codable {
 
     var title: String {
         switch self {
-        case .app: return "App 上架"
-        case .game: return "游戏上架"
-        case .none: return "不检查"
+        case .app: return tr("App 上架", "App submission")
+        case .game: return tr("游戏上架", "Game submission")
+        case .none: return tr("不检查", "Off")
         }
     }
 }
@@ -234,17 +234,17 @@ struct DossierDiff {
         var parts: [String] = []
         if !added.isEmpty { parts.append("+\(added.count)") }
         if !removed.isEmpty { parts.append("−\(removed.count)") }
-        if !modified.isEmpty { parts.append("改\(modified.count)") }
-        if !changedFields.isEmpty { parts.append("信息变\(changedFields.count)") }
-        return parts.isEmpty ? "无变化" : parts.joined(separator: " ")
+        if !modified.isEmpty { parts.append(tr("改\(modified.count)", "~\(modified.count)")) }
+        if !changedFields.isEmpty { parts.append(tr("信息变\(changedFields.count)", "Δ\(changedFields.count)")) }
+        return parts.isEmpty ? tr("无变化", "no changes") : parts.joined(separator: " ")
     }
 
     var summary: String {
         var parts: [String] = []
-        if !added.isEmpty { parts.append("新增 \(added.count)") }
-        if !removed.isEmpty { parts.append("删除 \(removed.count)") }
-        if !modified.isEmpty { parts.append("改动 \(modified.count)") }
-        if !changedFields.isEmpty { parts.append("信息变更 \(changedFields.count)") }
-        return parts.isEmpty ? "与上一版相同" : parts.joined(separator: " · ")
+        if !added.isEmpty { parts.append(tr("新增 \(added.count)", "\(added.count) added")) }
+        if !removed.isEmpty { parts.append(tr("删除 \(removed.count)", "\(removed.count) removed")) }
+        if !modified.isEmpty { parts.append(tr("改动 \(modified.count)", "\(modified.count) modified")) }
+        if !changedFields.isEmpty { parts.append(tr("信息变更 \(changedFields.count)", "\(changedFields.count) facts changed")) }
+        return parts.isEmpty ? tr("与上一版相同", "Same as last version") : parts.joined(separator: " · ")
     }
 }

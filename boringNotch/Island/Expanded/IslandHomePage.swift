@@ -40,10 +40,10 @@ struct IslandHomePage: View {
     private var clock: some View {
         TimelineView(.periodic(from: .now, by: 1)) { ctx in
             VStack(alignment: .leading, spacing: 1) {
-                Text(ctx.date.formatted(Date.FormatStyle(locale: Locale(identifier: "zh_CN")).weekday(.wide)))
+                Text(ctx.date.formatted(Date.FormatStyle(locale: IslandLanguage.locale).weekday(.wide)))
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Color(red: 1, green: 0.38, blue: 0.34))
-                Text(ctx.date.formatted(Date.FormatStyle(locale: Locale(identifier: "zh_CN")).month(.wide).day()))
+                Text(ctx.date.formatted(Date.FormatStyle(locale: IslandLanguage.locale).month(.wide).day()))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white.opacity(0.55))
                 Spacer(minLength: 0)
@@ -64,12 +64,12 @@ struct IslandHomePage: View {
         switch upcoming.status {
         case .needsAccess:
             VStack(alignment: .leading, spacing: 6) {
-                Label("日程", systemImage: "calendar").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
+                Label(tr("日程", "Calendar"), systemImage: "calendar").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
                 Spacer(minLength: 0)
-                Text("连接日历后，这里会显示下一个会议的倒计时。")
+                Text(tr("连接日历后，这里会显示下一个会议的倒计时。", "See your next meeting here."))
                     .font(.system(size: 11.5, weight: .medium))
                     .foregroundStyle(.white.opacity(0.7))
-                Button("允许访问日历") { upcoming.requestAccess() }
+                Button(tr("允许访问日历", "Connect")) { upcoming.requestAccess() }
                     .buttonStyle(IslandPillButtonStyle())
             }
         case .ready:
@@ -78,7 +78,7 @@ struct IslandHomePage: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 6) {
                             Circle().fill(Color(cgColor: next.color)).frame(width: 7, height: 7)
-                            Text(next.isOngoing(at: ctx.date) ? "进行中" : "下一项")
+                            Text(next.isOngoing(at: ctx.date) ? tr("进行中", "Now") : tr("下一项", "Next"))
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.white.opacity(0.6))
                             Spacer()
@@ -98,7 +98,7 @@ struct IslandHomePage: View {
                             Button {
                                 NSWorkspace.shared.open(url)
                             } label: {
-                                Label("加入会议", systemImage: "video.fill")
+                                Label(tr("加入会议", "Join Meeting"), systemImage: "video.fill")
                             }
                             .buttonStyle(IslandPillButtonStyle(tint: .green))
                             .padding(.top, 2)
@@ -107,10 +107,10 @@ struct IslandHomePage: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 6) {
-                    Label("日程", systemImage: "calendar").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
+                    Label(tr("日程", "Calendar"), systemImage: "calendar").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white.opacity(0.55))
                     Spacer(minLength: 0)
                     Image(systemName: "checkmark.seal.fill").font(.system(size: 18)).foregroundStyle(.green)
-                    Text("接下来 24 小时没有日程").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.white)
+                    Text(tr("接下来 24 小时没有日程", "Nothing in the next 24 hours")).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.white)
                 }
             }
         }
@@ -128,11 +128,11 @@ struct IslandQuickActions: View {
     var body: some View {
         let columns = [GridItem(.fixed(40), spacing: 8), GridItem(.fixed(40), spacing: 8)]
         LazyVGrid(columns: columns, spacing: 6) {
-            IslandToggleTile(symbol: "cup.and.saucer.fill", title: "防休眠", isOn: awake.isActive,
+            IslandToggleTile(symbol: "cup.and.saucer.fill", title: tr("防休眠", "Awake"), isOn: awake.isActive,
                              tint: Color(red: 0.85, green: 0.62, blue: 0.38)) {
                 awake.toggle()
             }
-            IslandToggleTile(symbol: "brain.head.profile", title: timer.isActive ? "专注中" : "番茄钟", isOn: timer.isActive,
+            IslandToggleTile(symbol: "brain.head.profile", title: timer.isActive ? tr("专注中", "Focusing") : tr("番茄钟", "Focus"), isOn: timer.isActive,
                              tint: IslandTimer.Kind.focus.tint) {
                 if timer.isActive {
                     withAnimation(IslandMotion.page) { ui.tab = .timer }
@@ -140,10 +140,10 @@ struct IslandQuickActions: View {
                     timer.startPomodoro()
                 }
             }
-            IslandToggleTile(symbol: "camera.viewfinder", title: "截图", isOn: false, tint: .white) {
+            IslandToggleTile(symbol: "camera.viewfinder", title: tr("截图", "Screenshot"), isOn: false, tint: .white) {
                 IslandActions.screenshot()
             }
-            IslandToggleTile(symbol: "moon.fill", title: "深色", isOn: IslandActions.isDarkMode, tint: .indigo) {
+            IslandToggleTile(symbol: "moon.fill", title: tr("深色", "Dark"), isOn: IslandActions.isDarkMode, tint: .indigo) {
                 IslandActions.toggleDarkMode()
             }
         }
@@ -172,7 +172,8 @@ struct IslandToggleTile: View {
                     .font(.system(size: 9.5, weight: .medium))
                     .foregroundStyle(.white.opacity(0.6))
                     .lineLimit(1)
-                    .fixedSize()
+                    .minimumScaleFactor(0.75)
+                    .frame(width: 44)
             }
             .frame(width: 40)
             .contentShape(Rectangle())
@@ -248,17 +249,17 @@ struct IslandEvent: Identifiable, Equatable {
     func relative(at date: Date) -> String {
         if isOngoing(at: date) {
             let left = Int(end.timeIntervalSince(date) / 60)
-            return "还剩 \(max(1, left)) 分钟"
+            return tr("还剩 \(max(1, left)) 分钟", "\(max(1, left)) min left")
         }
         let mins = Int(ceil(start.timeIntervalSince(date) / 60))
-        if mins < 60 { return "\(max(1, mins)) 分钟后" }
+        if mins < 60 { return tr("\(max(1, mins)) 分钟后", "in \(max(1, mins)) min") }
         let hours = mins / 60, rest = mins % 60
-        return rest == 0 ? "\(hours) 小时后" : "\(hours) 小时 \(rest) 分后"
+        return rest == 0 ? tr("\(hours) 小时后", "in \(hours) h") : tr("\(hours) 小时 \(rest) 分后", "in \(hours) h \(rest) min")
     }
 
     var timeRange: String {
         let f = Date.FormatStyle().hour(.twoDigits(amPM: .omitted)).minute(.twoDigits)
-        let day = Calendar.current.isDateInToday(start) ? "" : "明天 "
+        let day = Calendar.current.isDateInToday(start) ? "" : tr("明天 ", "Tomorrow ")
         return day + start.formatted(f) + " – " + end.formatted(f)
     }
 }
@@ -321,7 +322,7 @@ final class UpcomingEvents: ObservableObject {
             .first
         next = event.map {
             IslandEvent(id: $0.eventIdentifier ?? UUID().uuidString,
-                        title: $0.title ?? "日程",
+                        title: $0.title ?? tr("日程", "Calendar"),
                         start: $0.startDate, end: $0.endDate,
                         color: $0.calendar?.cgColor ?? CGColor(red: 1, green: 0.4, blue: 0.3, alpha: 1),
                         meetingURL: Self.meetingURL(in: $0))

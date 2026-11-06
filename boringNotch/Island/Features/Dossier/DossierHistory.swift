@@ -68,7 +68,7 @@ enum DossierRedactor {
             guard let src = CGImageSourceCreateWithURL(source as CFURL, nil),
                   let image = CGImageSourceCreateImageAtIndex(src, 0, nil),
                   let out = draw(image, boxes: doc.redactions.filter { $0.page == 0 }.map(\.rect)) else { return }
-            let dest = dir.appendingPathComponent(source.deletingPathExtension().lastPathComponent + "（打码）.png")
+            let dest = dir.appendingPathComponent(source.deletingPathExtension().lastPathComponent + tr("（打码）.png", " (redacted).png"))
             write(out, to: dest)
         } else if ext == "pdf", let pdf = PDFDocument(url: source) {
             // Rasterise every page with boxes burnt in, so nothing can be copied from under the black bars.
@@ -79,7 +79,7 @@ enum DossierRedactor {
                       let newPage = PDFPage(image: NSImage(cgImage: out, size: page.bounds(for: .mediaBox).size)) else { continue }
                 result.insert(newPage, at: result.pageCount)
             }
-            result.write(to: dir.appendingPathComponent(source.deletingPathExtension().lastPathComponent + "（打码）.pdf"))
+            result.write(to: dir.appendingPathComponent(source.deletingPathExtension().lastPathComponent + tr("（打码）.pdf", " (redacted).pdf")))
         }
     }
 

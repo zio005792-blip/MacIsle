@@ -145,13 +145,13 @@ struct IslandRootView: View {
                 if vm.notchState == .closed { open(to: nil) }
             }
             .contextMenu {
-                Button("设置…") { SettingsWindowController.shared.showWindow() }
+                Button(tr("设置…", "Settings…")) { SettingsWindowController.shared.showWindow() }
                 Divider()
-                Button(awake.isActive ? "关闭防休眠" : "防休眠") { awake.toggle() }
-                Button(timer.isActive ? "结束计时" : "开始番茄钟") {
+                Button(awake.isActive ? tr("关闭防休眠", "Stop Keep Awake") : tr("防休眠", "Awake")) { awake.toggle() }
+                Button(timer.isActive ? tr("结束计时", "End Timer") : tr("开始番茄钟", "Start Pomodoro")) {
                     timer.isActive ? timer.cancel() : timer.startPomodoro()
                 }
-                Toggle("显示摄像头", isOn: $ui.showCamera)
+                Toggle(tr("显示摄像头", "Show Camera"), isOn: $ui.showCamera)
             }
 
             if let bubble {
@@ -288,6 +288,16 @@ struct IslandRootView: View {
         withAnimation(IslandMotion.close) { vm.close() }
     }
 
+    /// The inner part of the resting pill (screen coordinates), used for hover-to-open.
+    private func inHotZone(_ p: NSPoint) -> Bool {
+        guard let window = NSApp.windows.first(where: { $0 is BoringNotchSkyLightWindow && $0.isVisible }) else { return false }
+        let m = metrics
+        let size = m.size(for: presentation)
+        let top = window.frame.maxY - m.topGap
+        let rect = NSRect(x: window.frame.midX - size.width / 2, y: top - size.height, width: size.width, height: size.height)
+        return rect.insetBy(dx: size.width * 0.2, dy: -2).contains(p)
+    }
+
     private func handleHover(_ isHovering: Bool) {
         if coordinator.firstLaunch { return }
         hoverTask?.cancel()
@@ -298,8 +308,21 @@ struct IslandRootView: View {
             guard vm.notchState == .closed, Defaults[.openNotchOnHover], !coordinator.sneakPeek.show else { return }
             let delay = max(0.12, Defaults[.minimumHoverDuration])
             hoverTask = Task {
-                try? await Task.sleep(for: .seconds(delay))
-                guard !Task.isCancelled, hovering, vm.notchState == .closed else { return }
+                // Hover-to-open needs a deliberate rest on the *core* of the pill: the pointer
+                // must sit in the middle part and stay (almost) still for the whole delay.
+                var anchor = NSEvent.mouseLocation
+                var waited = 0.0
+                while waited < delay {
+                    try? await Task.sleep(for: .milliseconds(40))
+                    guard !Task.isCancelled, hovering, vm.notchState == .closed else { return }
+                    let p = NSEvent.mouseLocation
+                    if !inHotZone(p) || hypot(p.x - anchor.x, p.y - anchor.y) > 6 {
+                        anchor = p      // moved or off-centre: restart the wait
+                        waited = 0
+                        continue
+                    }
+                    waited += 0.04
+                }
                 open(to: nil)
             }
         } else {

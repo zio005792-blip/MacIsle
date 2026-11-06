@@ -48,16 +48,16 @@ enum IslandTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: return "概览"
-        case .agents: return "AI 任务"
-        case .dossier: return "资料整理"
-        case .screens: return "商店截图"
-        case .media: return "音乐"
-        case .calendar: return "日程"
-        case .timer: return "计时"
-        case .system: return "系统"
-        case .clipboard: return "剪贴板"
-        case .shelf: return "文件"
+        case .home: return tr("概览", "Overview")
+        case .agents: return tr("AI 任务", "AI Tasks")
+        case .dossier: return tr("资料整理", "Client Dossier")
+        case .screens: return tr("商店截图", "Store Screenshots")
+        case .media: return tr("音乐", "Music")
+        case .calendar: return tr("日程", "Calendar")
+        case .timer: return tr("计时", "Timer")
+        case .system: return tr("系统", "System")
+        case .clipboard: return tr("剪贴板", "Clipboard")
+        case .shelf: return tr("文件", "Files")
         }
     }
 }

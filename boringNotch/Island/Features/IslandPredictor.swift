@@ -97,47 +97,47 @@ final class IslandPredictor {
 
         // What's happening right now.
         let agents = AgentCenter.shared
-        if agents.needsAttention != nil { bump(.agents, 12, "有 AI 任务在等你确认") }
-        else if !agents.active.isEmpty { bump(.agents, 3, "AI 任务正在运行") }
+        if agents.needsAttention != nil { bump(.agents, 12, tr("有 AI 任务在等你确认", "an AI task is waiting for you")) }
+        else if !agents.active.isEmpty { bump(.agents, 3, tr("AI 任务正在运行", "an AI task is running")) }
 
         if dragging {
             switch ctx.dragKind {
-            case .folder: bump(.dossier, 14, "你拖来的是一个文件夹")
+            case .folder: bump(.dossier, 14, tr("你拖来的是一个文件夹", "you're dragging a folder"))
             case .images:
-                if Self.isDevApp(app) { bump(.screens, 10, "从开发工具拖来的截图") }
-                bump(.shelf, 8, "暂存这些图片")
-            case .files, .none: bump(.shelf, 9, "暂存拖来的文件")
+                if Self.isDevApp(app) { bump(.screens, 10, tr("从开发工具拖来的截图", "screenshots from your dev tools")) }
+                bump(.shelf, 8, tr("暂存这些图片", "stash these images"))
+            case .files, .none: bump(.shelf, 9, tr("暂存拖来的文件", "stash the files you're dragging"))
             }
         }
 
         let dossier = DossierCenter.shared
-        if dossier.isBusy || dossier.phase == .review { bump(.dossier, 7, dossier.isBusy ? "资料正在识别" : "资料识别完成，等你核对") }
-        if IslandTimer.shared.isActive { bump(.timer, 4, "计时进行中") }
-        if MusicManager.shared.isPlaying { bump(.media, 3, "正在播放音乐") }
-        if ctx.meetingSoon { bump(.home, 6, "会议马上开始") }
-        if ctx.clipboardFresh { bump(.clipboard, 5, "刚复制的内容可以一键转换") }
+        if dossier.isBusy || dossier.phase == .review { bump(.dossier, 7, dossier.isBusy ? tr("资料正在识别", "documents are being read") : tr("资料识别完成，等你核对", "the dossier is ready for review")) }
+        if IslandTimer.shared.isActive { bump(.timer, 4, tr("计时进行中", "a timer is running")) }
+        if MusicManager.shared.isPlaying { bump(.media, 3, tr("正在播放音乐", "music is playing")) }
+        if ctx.meetingSoon { bump(.home, 6, tr("会议马上开始", "a meeting starts soon")) }
+        if ctx.clipboardFresh { bump(.clipboard, 5, tr("刚复制的内容可以一键转换", "what you just copied can be converted")) }
 
         // Front app.
         switch app {
         case "com.apple.Terminal", "com.googlecode.iterm2", "dev.warp.Warp-Stable", "com.mitchellh.ghostty",
              "com.anthropic.claudefordesktop", "com.openai.chat", "com.openai.codex":
-            bump(.agents, 3, "你在用终端 / AI 助手")
+            bump(.agents, 3, tr("你在用终端 / AI 助手", "you're in a terminal / AI assistant"))
         case "com.apple.dt.Xcode", "com.apple.iphonesimulator", "com.apple.TestFlight", "com.apple.TransporterApp":
-            bump(.screens, 2.5, "你在做 App 上架相关的事")
+            bump(.screens, 2.5, tr("你在做 App 上架相关的事", "you're working on an App Store release"))
             bump(.agents, 1, "")
             bump(.system, 1, "")
         case "com.apple.Music", "com.spotify.client", "com.bytedance.douyin.desktop", "com.netease.163music", "com.tencent.QQMusicMac":
-            bump(.media, 3, "你在听歌 / 看视频")
+            bump(.media, 3, tr("你在听歌 / 看视频", "you're listening / watching"))
         case "com.apple.finder":
-            bump(.shelf, 2, "你在整理文件")
-            bump(.dossier, 2, "你在整理文件")
+            bump(.shelf, 2, tr("你在整理文件", "you're organising files"))
+            bump(.dossier, 2, tr("你在整理文件", "you're organising files"))
         case "com.tencent.xinWeChat", "com.tencent.qq", "com.microsoft.Word", "com.kingsoft.wpsoffice.mac", "org.libreoffice.script":
-            bump(.dossier, 2, "你在处理客户沟通 / 文档")
-            bump(.clipboard, 2, "你在处理客户沟通 / 文档")
+            bump(.dossier, 2, tr("你在处理客户沟通 / 文档", "you're handling client messages / docs"))
+            bump(.clipboard, 2, tr("你在处理客户沟通 / 文档", "you're handling client messages / docs"))
         default:
             break
         }
-        bump(.home, 1, "概览")
+        bump(.home, 1, tr("概览", "Overview"))
 
         // Learned habits.
         for tab in available {
@@ -146,7 +146,7 @@ final class IslandPredictor {
             let learned = 1.6 * log1p(a) + 0.6 * log1p(h)
             if learned > 0 {
                 score[tab, default: 0] += learned
-                if a >= 2, (score[tab] ?? 0) - learned < 3 { why[tab] = "你在这个应用里常用它" }
+                if a >= 2, (score[tab] ?? 0) - learned < 3 { why[tab] = tr("你在这个应用里常用它", "you often use it in this app") }
             }
         }
 

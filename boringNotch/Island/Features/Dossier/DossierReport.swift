@@ -210,7 +210,7 @@ enum DossierReport {
                                                             .title: "\(folder) 客户资料整理"])
         let downloads = (FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Downloads")).resolvingSymlinksInPath()
-        let dir = downloads.appendingPathComponent("客户资料整理", isDirectory: true)
+        let dir = downloads.appendingPathComponent(tr("客户资料整理", "Client Dossiers"), isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let stamp = DateFormatter()
         stamp.dateFormat = "MMdd-HHmmss"

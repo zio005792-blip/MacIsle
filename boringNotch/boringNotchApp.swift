@@ -18,13 +18,13 @@ struct MacIsleApp: App {
 
     var body: some Scene {
         MenuBarExtra("MacIsle", systemImage: "capsule.fill", isInserted: $showMenuBarIcon) {
-            Button("设置…") {
+            Button(tr("设置…", "Settings…")) {
                 DispatchQueue.main.async { SettingsWindowController.shared.showWindow() }
             }
             .keyboardShortcut(KeyEquivalent(","), modifiers: .command)
             Divider()
-            Button("重新启动 MacIsle") { ApplicationRelauncher.restart() }
-            Button("退出", role: .destructive) { NSApplication.shared.terminate(nil) }
+            Button(tr("重新启动 MacIsle", "Restart MacIsle")) { ApplicationRelauncher.restart() }
+            Button(tr("退出", "Quit"), role: .destructive) { NSApplication.shared.terminate(nil) }
                 .keyboardShortcut(KeyEquivalent("Q"), modifiers: .command)
         }
     }

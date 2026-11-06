@@ -34,7 +34,7 @@ struct IslandMediaPage: View {
 
             // Title + artist
             VStack(alignment: .leading, spacing: -1) {
-                Text(music.songTitle.isEmpty ? "未在播放" : music.songTitle)
+                Text(music.songTitle.isEmpty ? tr("未在播放", "Not Playing") : music.songTitle)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
                 Text(music.artistName)
