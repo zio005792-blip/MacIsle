@@ -189,11 +189,14 @@ struct IslandRootView: View {
             } else if ui.alert == .dossier {
                 ui.tab = .dossier
                 _ = IslandPredictor.shared.guess(available: available, dragging: dragging)
-            } else {
+            } else if IslandSettings.shared.predict {
                 let guess = IslandPredictor.shared.guess(available: available, dragging: dragging)
                 ui.tab = guess.tab
                 // Explain the guess only when it isn't the obvious default.
-                ui.showHint(guess.tab != .home && !guess.reason.isEmpty ? guess.reason : nil)
+                ui.showHint(IslandSettings.shared.predictHint && guess.tab != .home && !guess.reason.isEmpty ? guess.reason : nil)
+            } else {
+                _ = IslandPredictor.shared.guess(available: available, dragging: dragging)
+                if !available.contains(ui.tab) { ui.tab = available.first ?? .home }
             }
             pendingTab = nil
             ui.dismissAlert()
@@ -302,6 +305,7 @@ struct IslandRootView: View {
                     pressed = false
                 }
                 if vm.notchState == .open,
+                   !ui.keyboardFocus,
                    !vm.isBatteryPopoverActive,
                    !vm.anyDropZoneTargeting,
                    !SharingStateManager.shared.preventNotchClose {

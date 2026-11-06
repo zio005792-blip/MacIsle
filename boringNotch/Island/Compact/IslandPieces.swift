@@ -24,7 +24,7 @@ struct IslandWaveform: View {
     private static let phases: [Double] = [0.0, 1.7, 3.1, 0.9, 2.4, 4.0]
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: !isPlaying && level == 0)) { context in
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !isPlaying && level == 0)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
             Canvas { ctx, size in
                 let total = CGFloat(bars) * barWidth + CGFloat(bars - 1) * spacing

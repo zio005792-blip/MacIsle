@@ -81,6 +81,9 @@ final class AgentCenter: ObservableObject {
     @Published private(set) var sessions: [AgentSession] = []
     /// The session the latest alert is about.
     @Published private(set) var spotlight: AgentSession?
+    /// For the self-check: when / from which tool the last hook event arrived.
+    private(set) var lastEventAt: Date?
+    private(set) var lastEventTool: String?
 
     private var sweeper: AnyCancellable?
 
@@ -104,6 +107,8 @@ final class AgentCenter: ObservableObject {
         func q(_ k: String) -> String? { items.first { $0.name == k }?.value.flatMap { $0.isEmpty ? nil : $0 } }
 
         let tool = AgentTool(rawValue: q("tool") ?? "") ?? .shell
+        lastEventAt = .now
+        lastEventTool = tool.name
         let event = q("event") ?? "done"
         let id = "\(tool.rawValue).\(q("id") ?? q("title") ?? UUID().uuidString)"
         let title = q("title") ?? tool.name

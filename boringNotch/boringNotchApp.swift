@@ -397,25 +397,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self.closeNotchTask?.cancel()
                 self.closeNotchTask = nil
 
-                switch viewModel.notchState {
-                case .closed:
-                    await MainActor.run {
-                        viewModel.open()
-                    }
-
-                    let task = Task { [weak viewModel] in
-                        do {
-                            try await Task.sleep(for: .seconds(3))
-                            await MainActor.run {
-                                viewModel?.close()
-                            }
-                        } catch { }
-                    }
-                    self.closeNotchTask = task
-                case .open:
-                    await MainActor.run {
-                        viewModel.close()
-                    }
+                await MainActor.run {
+                    // Keyboard mode: arrows switch cards, numbers jump, Esc closes.
+                    IslandKeyboard.toggle(viewModel)
                 }
             }
         }

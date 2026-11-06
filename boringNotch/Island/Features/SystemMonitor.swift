@@ -43,7 +43,7 @@ final class SystemMonitor: ObservableObject {
 
     private func startSampling() {
         sample()
-        timer = Timer.publish(every: 1.0, on: .main, in: .common)
+        timer = Timer.publish(every: 2.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 Task { @MainActor in self?.sample() }

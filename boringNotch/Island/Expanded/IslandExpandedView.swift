@@ -61,6 +61,12 @@ struct IslandExpandedView: View {
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: ui.hint)
         .frame(width: size.width, height: size.height)
         .onAppear(perform: installSwipe)
+        .onReceive(NotificationCenter.default.publisher(for: .islandStep)) { note in
+            if let delta = note.object as? Int { step(delta) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .islandJump)) { note in
+            if let index = note.object as? Int, tabs.indices.contains(index) { select(tabs[index], bySwipe: true) }
+        }
         .onDisappear(perform: removeSwipe)
         .onChange(of: tabs) { _, list in
             if !list.contains(ui.tab) { select(list.first ?? .home) }
@@ -202,6 +208,11 @@ struct IslandExpandedView: View {
     }
 }
 
+extension Notification.Name {
+    static let islandStep = Notification.Name("island.step")
+    static let islandJump = Notification.Name("island.jump")
+}
+
 struct IslandSlideModifier: ViewModifier {
     var x: CGFloat
     var blur: CGFloat
@@ -238,8 +249,9 @@ final class IslandSwipeTracker: ObservableObject {
     private var samples: [(t: TimeInterval, dx: CGFloat)] = []
     private var lastDiscreteStep = Date.distantPast
 
-    private let commitDistance: CGFloat = 30
-    private let instantDistance: CGFloat = 90
+    private var commitDistance: CGFloat { CGFloat(IslandSettings.shared.swipeCommit) }
+    private var flickDistance: CGFloat { CGFloat(IslandSettings.shared.swipeFlick) }
+    private var instantDistance: CGFloat { max(90, commitDistance * 2.6) }
     private let flickVelocity: CGFloat = 320
 
     func consume(_ event: NSEvent) -> Outcome {
@@ -307,8 +319,8 @@ final class IslandSwipeTracker: ObservableObject {
         guard axis == .horizontal else { return .pass }
         guard !committed else { return .swallow }
         let v = velocity()
-        let forward = raw < -commitDistance || (v < -flickVelocity && raw < -14)
-        let backward = raw > commitDistance || (v > flickVelocity && raw > 14)
+        let forward = raw < -commitDistance || (v < -flickVelocity && raw < -flickDistance)
+        let backward = raw > commitDistance || (v > flickVelocity && raw > flickDistance)
         if forward, let o = commit(true) { return o }
         if backward, let o = commit(false) { return o }
         springBack()

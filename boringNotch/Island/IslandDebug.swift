@@ -85,6 +85,17 @@ enum IslandDebug {
             StoreScreenshots.shared.process(files)
         case "show":
             vm.hideOnClosed = false
+        case "selfcheck":
+            IslandSelfCheck.shared.run()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                for item in IslandSelfCheck.shared.items { log("CHECK \(item.status) | \(item.name) | \(item.detail)") }
+            }
+        case "settings":
+            SettingsWindowController.shared.showWindow()
+        case "key":
+            IslandKeyboard.toggle(vm)
+        case "step":
+            NotificationCenter.default.post(name: .islandStep, object: Int(arg) ?? 1)
         case "dossier":
             DossierCenter.shared.start(folder: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(arg.isEmpty ? "dossier-sample" : arg))
         case "dossier-export":

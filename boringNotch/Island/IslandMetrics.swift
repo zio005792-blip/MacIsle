@@ -113,13 +113,15 @@ struct IslandMetrics {
     /// Height of the resting pill: 0.73 × menu bar, like the MacBook Pro island.
     var compactHeight: CGFloat {
         if hasHardwareNotch { return max(menuBarHeight, 30) }
-        return min(32, max(20, (menuBarHeight * 0.73).rounded()))
+        let scale = CGFloat(UserDefaults.standard.object(forKey: "island.scale") as? Double ?? 1)
+        return min(40, max(18, (menuBarHeight * 0.73 * scale).rounded()))
     }
 
     /// Gap between the top of the screen and the island.
     var topGap: CGFloat {
         if hasHardwareNotch { return 0 }
-        return min(8, max(2, (menuBarHeight * 0.18).rounded()))
+        let fit = (menuBarHeight - compactHeight) / 2
+        return min(8, max(1, min((menuBarHeight * 0.18).rounded(), fit.rounded())))
     }
 
     var idleWidth: CGFloat {

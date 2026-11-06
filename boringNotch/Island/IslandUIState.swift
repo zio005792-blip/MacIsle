@@ -17,11 +17,18 @@ enum IslandTab: String, CaseIterable, Identifiable {
     /// Cards in swipe order. Music / AI cards only exist while they have something to show.
     @MainActor
     static func available(musicActive: Bool) -> [IslandTab] {
-        var list: [IslandTab] = musicActive ? [.media] : []
-        if !AgentCenter.shared.sessions.isEmpty { list.append(.agents) }
-        list += [.home, .timer, .calendar, .dossier, .screens, .system, .clipboard]
-        if Defaults[.boringShelf] { list.append(.shelf) }
-        return list
+        let settings = IslandSettings.shared
+        let hidden = settings.hiddenTabs
+        let list = settings.order.filter { tab in
+            guard !hidden.contains(tab) else { return false }
+            switch tab {
+            case .media: return musicActive
+            case .agents: return !AgentCenter.shared.sessions.isEmpty
+            case .shelf: return Defaults[.boringShelf]
+            default: return true
+            }
+        }
+        return list.isEmpty ? [.home] : list
     }
 
     var symbol: String {
@@ -80,6 +87,8 @@ final class IslandUIState: ObservableObject {
     @AppStorage("island.idleStyle") var showIdlePill: Bool = true
     /// Draws a virtual camera lens like the MacBook Pro's hole-punch.
     @AppStorage("island.showCamera") var showCamera: Bool = true
+    /// The island was opened from the keyboard and owns key focus (arrows / numbers / Esc).
+    @Published var keyboardFocus = false
 
     private var alertTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []

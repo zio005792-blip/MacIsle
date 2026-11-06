@@ -150,7 +150,7 @@ struct IslandSystemPage: View {
                             Capsule().fill(Color.white.opacity(0.12))
                             Capsule().fill(LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing))
                                 .frame(width: geo.size.width * monitor.memoryFraction)
-                                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: monitor.memoryFraction)
+                                .animation(.easeOut(duration: 0.3), value: monitor.memoryFraction)
                         }
                     }
                     .frame(height: 8)
@@ -188,8 +188,6 @@ struct IslandSystemPage: View {
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(.white)
-                    .contentTransition(.numericText())
-                    .animation(.snappy, value: value)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 content()
@@ -232,7 +230,7 @@ struct IslandSparkline: View {
             }
             ctx.stroke(line, with: .color(tint), style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
         }
-        .animation(.linear(duration: 0.9), value: values)
+        .drawingGroup()
     }
 }
 
