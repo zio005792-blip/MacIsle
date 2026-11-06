@@ -1,6 +1,6 @@
 //
 //  KeepAwakeManager.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  "Caffeinate" from the island: prevents display + idle sleep, optionally for a set time.
 //
@@ -26,7 +26,7 @@ final class KeepAwakeManager: ObservableObject {
     /// - Parameter duration: nil = indefinitely.
     func start(for duration: TimeInterval?) {
         stop()
-        let reason = "Boring Notch Island keep-awake" as CFString
+        let reason = "MacIsle keep-awake" as CFString
         let result = IOPMAssertionCreateWithName(
             kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),

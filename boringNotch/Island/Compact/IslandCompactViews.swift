@@ -1,6 +1,6 @@
 //
 //  IslandCompactViews.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Content for the resting, compact, HUD and alert presentations, plus the bubble.
 //

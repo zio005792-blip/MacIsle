@@ -1,6 +1,6 @@
 //
 //  IslandMetrics.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Geometry for the floating Mac-style Dynamic Island.
 //

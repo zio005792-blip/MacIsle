@@ -1,6 +1,6 @@
 //
 //  IslandHomePage.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Glanceable overview: clock, now playing / next event, quick actions.
 //

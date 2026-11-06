@@ -1,6 +1,6 @@
 //
 //  DossierHistory.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Remembers the last processed version of each client (file list + resolved key facts,
 //  never the full text) so a resubmission can be compared with what came before.

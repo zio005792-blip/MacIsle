@@ -1,6 +1,6 @@
 //
 //  DossierModels.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Data model for "客户资料整理": documents, categories, extracted fields and
 //  cross-document comparison results.

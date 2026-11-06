@@ -1,6 +1,6 @@
 //
 //  SystemMonitor.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Lightweight CPU / memory / network sampler. Only runs while someone is looking.
 //

@@ -1,6 +1,6 @@
 //
 //  IslandPredictor.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  "猜你想用": picks the card you most likely want when the island opens.
 //

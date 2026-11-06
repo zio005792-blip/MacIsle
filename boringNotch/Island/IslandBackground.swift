@@ -1,6 +1,6 @@
 //
 //  IslandBackground.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  The black body of the island. The main shape uses Apple's continuous corners;
 //  a second activity buds off as a bubble joined by a metaball bridge that thins

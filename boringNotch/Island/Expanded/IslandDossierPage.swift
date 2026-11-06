@@ -1,6 +1,6 @@
 //
 //  IslandDossierPage.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  资料整理 card: drop a client folder → live OCR progress → confirm conflicts → Word document.
 //

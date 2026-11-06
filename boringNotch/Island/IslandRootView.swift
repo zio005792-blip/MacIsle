@@ -1,6 +1,6 @@
 //
 //  IslandRootView.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Root view of the island window. Decides what to present, morphs the liquid body
 //  between presentations and routes hover / click / drag interactions.

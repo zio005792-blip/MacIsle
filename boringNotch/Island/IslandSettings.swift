@@ -1,6 +1,6 @@
 //
 //  IslandSettings.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  User preferences for the island (shown in Settings › 灵动岛).
 //

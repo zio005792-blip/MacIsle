@@ -1,6 +1,6 @@
 //
 //  ClipboardTransforms.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  One-tap developer conversions for clipboard text: JSON pretty-print / minify,
 //  URL / Base64 decode, Unix timestamp ↔ date, JWT payload, case changes.

@@ -1,6 +1,6 @@
 //
 //  IslandPieces.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Small reusable building blocks: waveform, rings, album art, transitions.
 //

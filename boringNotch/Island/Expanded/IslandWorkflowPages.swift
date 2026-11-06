@@ -1,6 +1,6 @@
 //
 //  IslandWorkflowPages.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Cards built around a solo iOS / game developer's day: AI agent tasks and
 //  App Store screenshot export.

@@ -1,6 +1,6 @@
 //
 //  IslandMediaPage.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Now Playing card, laid out to the positions measured from Apple's MacBook Pro
 //  island (278 × 148 pt):

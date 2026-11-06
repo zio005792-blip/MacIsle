@@ -6,10 +6,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.boringnotch.island</string>
+			<string>com.macisle.app.agent</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>boringisland</string>
+				<string>macisle</string>
 			</array>
 		</dict>
 	</array>
@@ -22,18 +22,6 @@
 	<string>灵动岛会显示你下一个日程的倒计时和会议链接。</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>灵动岛会在日历卡片里显示你的提醒事项。</string>
-	<key>SUAutomaticallyUpdate</key>
-	<false/>
-	<key>SUEnableAutomaticChecks</key>
-	<false/>
-	<key>SUEnableDownloaderService</key>
-	<true/>
-	<key>SUEnableInstallerLauncherService</key>
-	<true/>
-	<key>SUFeedURL</key>
-	<string>https://TheBoredTeam.github.io/boring.notch/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>B1Y47t8C/v8ImurYA+9arEsuCrpxwJSviekiflMElbI=</string>
 	<key>UTImportedTypeDeclarations</key>
 	<array>
 		<dict/>

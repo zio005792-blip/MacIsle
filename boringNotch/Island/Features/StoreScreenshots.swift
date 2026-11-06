@@ -1,6 +1,6 @@
 //
 //  StoreScreenshots.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Drop screenshots on the island → exact App Store Connect sizes (opaque PNG, no alpha,
 //  aspect-fill + centre crop, orientation preserved). Output: ~/Downloads/App Store 截图/<device>/

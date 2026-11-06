@@ -1,0 +1,20 @@
+MacIsle
+Copyright (C) 2026 MacIsle contributors
+
+This program is free software: you can redistribute it and/or modify it under the terms of
+the GNU General Public License as published by the Free Software Foundation, either version 3
+of the License, or (at your option) any later version. See LICENSE.
+
+MacIsle is a modified version of Boring Notch
+  https://github.com/TheBoredTeam/boring.notch
+  Copyright (C) TheBoredTeam and contributors, licensed under GPL-3.0.
+
+Modifications (2026): new Mac-style island presentation layer (boringNotch/Island/), new
+settings window, AI-agent / terminal live activities, App Store screenshot export, clipboard
+transforms, client dossier OCR & report, predictive card selection, notch-screen layout,
+removal of the original notch UI, onboarding, settings and auto-updater, and renaming.
+
+Bundled third-party components are listed in THIRD_PARTY_LICENSES, including
+MediaRemoteAdapter (mediaremote-adapter/).
+
+MacIsle is not affiliated with Apple Inc. "Dynamic Island" is a trademark of Apple Inc.

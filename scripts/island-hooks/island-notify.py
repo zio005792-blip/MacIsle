@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Send an event to the Boring Notch island without stealing focus.
+"""Send an event to the MacIsle without stealing focus.
 
 Usage:
   island-notify.py claude            (Claude Code hook: JSON on stdin)
@@ -11,8 +11,23 @@ import json, os, subprocess, sys, urllib.parse
 def send(**params):
     params = {k: str(v) for k, v in params.items() if v not in (None, "")}
     params.setdefault("app", os.environ.get("TERM_PROGRAM", "") or ("claude-desktop" if os.environ.get("CLAUDE_CODE_ENTRYPOINT") == "claude-desktop" else ""))
-    url = "boringisland://agent?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
+    url = "macisle://agent?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
     subprocess.run(["/usr/bin/open", "-g", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+STATE_DIR = os.path.expanduser("~/.macisle/state")
+
+def changed(session, event):
+    """True if this session's last reported event differs (dedupes per-tool hooks)."""
+    try:
+        os.makedirs(STATE_DIR, exist_ok=True)
+        path = os.path.join(STATE_DIR, "".join(c for c in session if c.isalnum() or c in "-_")[:80] or "default")
+        last = open(path).read() if os.path.exists(path) else ""
+        if last == event:
+            return False
+        open(path, "w").write(event)
+    except Exception:
+        pass
+    return True
 
 def short(text, n=40):
     text = " ".join((text or "").split())
@@ -28,14 +43,21 @@ def claude():
     title = os.path.basename(cwd.rstrip("/")) or "Claude Code"
     sid = data.get("session_id", title)
     if event == "UserPromptSubmit":
+        changed(sid, "start")
         send(tool="claude", event="start", id=sid, title=title, detail=short(data.get("prompt", ""), 30))
     elif event == "Notification":
         msg = data.get("message", "")
         # Idle reminders are noise; permission / input requests are what matter.
         if "waiting for your input" in msg.lower():
             return
+        changed(sid, "attention")
         send(tool="claude", event="attention", id=sid, title=title, detail=short(msg, 30))
+    elif event in ("PostToolUse", "PreToolUse"):
+        # Fires after you approve a permission request: back to "running" (once).
+        if changed(sid, "start"):
+            send(tool="claude", event="start", id=sid, title=title)
     elif event == "Stop":
+        changed(sid, "done")
         send(tool="claude", event="done", id=sid, title=title)
 
 def codex(args):

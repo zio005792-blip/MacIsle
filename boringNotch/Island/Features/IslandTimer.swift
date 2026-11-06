@@ -1,6 +1,6 @@
 //
 //  IslandTimer.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Countdown timer + Pomodoro that lives in the island as a Live Activity.
 //

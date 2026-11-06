@@ -1,11 +1,11 @@
 //
 //  AgentCenter.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Live Activities for AI coding agents (Claude Code, Codex) and long terminal commands.
 //  Hooks report in through a URL (sandbox-friendly, never steals focus):
 //
-//    open -g "boringisland://agent?tool=claude&event=start&id=<session>&title=<project>&app=<TERM_PROGRAM>"
+//    open -g "macisle://agent?tool=claude&event=start&id=<session>&title=<project>&app=<TERM_PROGRAM>"
 //
 //  events: start | attention | done | error | end (silently removes)      tools: claude | codex | shell
 //  optional: detail=<text>  duration=<seconds>  status=<exit code>
@@ -102,7 +102,7 @@ final class AgentCenter: ObservableObject {
     // MARK: Intake
 
     func handle(url: URL) {
-        guard url.scheme == "boringisland", url.host == "agent" else { return }
+        guard url.scheme == "macisle", url.host == "agent" else { return }
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         func q(_ k: String) -> String? { items.first { $0.name == k }?.value.flatMap { $0.isEmpty ? nil : $0 } }
 

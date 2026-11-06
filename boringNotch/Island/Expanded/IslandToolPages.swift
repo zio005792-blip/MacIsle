@@ -1,6 +1,6 @@
 //
 //  IslandToolPages.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Timer / Pomodoro, system monitor and clipboard history pages.
 //

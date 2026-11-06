@@ -1,6 +1,6 @@
 //
 //  ClipboardHistory.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  In-memory clipboard history (never written to disk). Skips anything a password
 //  manager marks as concealed or transient.

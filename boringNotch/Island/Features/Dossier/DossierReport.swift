@@ -1,6 +1,6 @@
 //
 //  DossierReport.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Builds the "客户资料整理" document (HTML → NSAttributedString → .docx, opens in Word/Pages).
 //  `masked: true` produces the shareable 打码版 (ID / card / phone numbers hidden everywhere).

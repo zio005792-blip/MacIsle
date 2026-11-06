@@ -1,6 +1,6 @@
 //
 //  IslandExpandedView.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  The expanded island: one Apple-style card at a time. Cards are switched with a
 //  two-finger horizontal swipe or the page dots; the island morphs to each card's size.

@@ -1,6 +1,6 @@
 //
 //  IslandUIState.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  UI-only state shared by all island windows: selected page, transient alerts.
 //

@@ -1,6 +1,6 @@
 //
 //  IslandDebug.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  DEBUG-only remote control used for visual testing:
 //  echo open > ~/Library/Containers/theboringteam.boringnotch/Data/tmp/island-debug.txt

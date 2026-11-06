@@ -9,42 +9,23 @@ import AVFoundation
 import Combine
 import Defaults
 import KeyboardShortcuts
-import Sparkle
 import SwiftUI
 
 @main
-struct DynamicNotchApp: App {
+struct MacIsleApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Default(.menubarIcon) var showMenuBarIcon
-    @Environment(\.openWindow) var openWindow
-
-    let updaterController: SPUStandardUpdaterController
-
-    init() {
-        updaterController = SPUStandardUpdaterController(
-            startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
-
-        // Initialize the settings window controller with the updater controller
-        SettingsWindowController.shared.setUpdaterController(updaterController)
-    }
 
     var body: some Scene {
-        MenuBarExtra("boring.notch", systemImage: "sparkle", isInserted: $showMenuBarIcon) {
-            Button("Settings") {
-                DispatchQueue.main.async {
-                    SettingsWindowController.shared.showWindow()
-                }
+        MenuBarExtra("MacIsle", systemImage: "capsule.fill", isInserted: $showMenuBarIcon) {
+            Button("设置…") {
+                DispatchQueue.main.async { SettingsWindowController.shared.showWindow() }
             }
             .keyboardShortcut(KeyEquivalent(","), modifiers: .command)
-            CheckForUpdatesView(updater: updaterController.updater)
             Divider()
-            Button("Restart Boring Notch") {
-                ApplicationRelauncher.restart()
-            }
-            Button("Quit", role: .destructive) {
-                NSApplication.shared.terminate(self)
-            }
-            .keyboardShortcut(KeyEquivalent("Q"), modifiers: .command)
+            Button("重新启动 MacIsle") { ApplicationRelauncher.restart() }
+            Button("退出", role: .destructive) { NSApplication.shared.terminate(nil) }
+                .keyboardShortcut(KeyEquivalent("Q"), modifiers: .command)
         }
     }
 }
@@ -57,18 +38,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let vm: BoringViewModel = .init()
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     var quickShareService = QuickShareService.shared
-    var whatsNewWindow: NSWindow?
     var timer: Timer?
     var closeNotchTask: Task<Void, Never>?
     private var previousScreens: [NSScreen]?
-    private var onboardingWindowController: NSWindowController?
     private var screenLockedObserver: Any?
     private var screenUnlockedObserver: Any?
     private var isScreenLocked: Bool = false
     private var windowScreenDidChangeObserver: Any?
     private var dragDetectors: [String: DragDetector] = [:] // UUID -> DragDetector
 
-    /// `boringisland://agent?...` from Claude Code / Codex / shell hooks.
+    /// `macisle://agent?...` from Claude Code / Codex / shell hooks.
     func application(_ application: NSApplication, open urls: [URL]) {
         Task { @MainActor in
             for url in urls { AgentCenter.shared.handle(url: url) }
@@ -417,24 +396,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupDragDetectors()
 
         if coordinator.firstLaunch {
-            DispatchQueue.main.async {
-                self.showOnboardingWindow()
-            }
-            playWelcomeSound()
-        } else if MusicManager.shared.isNowPlayingDeprecated
-            && Defaults[.mediaController] == .nowPlaying
-        {
-            DispatchQueue.main.async {
-                self.showOnboardingWindow(step: .musicPermission)
-            }
+            coordinator.firstLaunch = false
+            DispatchQueue.main.async { SettingsWindowController.shared.showWindow() }
         }
 
         previousScreens = NSScreen.screens
-    }
-
-    func playWelcomeSound() {
-        let audioPlayer = AudioPlayer()
-        audioPlayer.play(fileName: "boring", fileExtension: "m4a")
     }
 
     func deviceHasNotch() -> Bool {
@@ -552,43 +518,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.terminate(self)
     }
 
-    private func showOnboardingWindow(step: OnboardingStep = .welcome) {
-        if onboardingWindowController == nil {
-            let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 400, height: 600),
-                styleMask: [.titled, .fullSizeContentView],
-                backing: .buffered,
-                defer: false
-            )
-            window.center()
-            window.title = "Onboarding"
-            window.titlebarAppearsTransparent = true
-            window.titleVisibility = .hidden
-            window.contentView = NSHostingView(
-                rootView: OnboardingView(
-                    step: step,
-                    onFinish: {
-                        window.orderOut(nil)
-//                        NSApp.setActivationPolicy(.accessory)
-                        window.close()
-                        NSApp.deactivate()
-                    },
-                    onOpenSettings: {
-                        window.close()
-                        SettingsWindowController.shared.showWindow()
-                    }
-                ))
-            window.isRestorable = false
-            window.identifier = NSUserInterfaceItemIdentifier("OnboardingWindow")
 
-            onboardingWindowController = NSWindowController(window: window)
-        }
-
-//        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        onboardingWindowController?.window?.makeKeyAndOrderFront(nil)
-        onboardingWindowController?.window?.orderFrontRegardless()
-    }
 }
 
 extension Notification.Name {

@@ -1,6 +1,6 @@
 //
 //  IslandKeyboard.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Keyboard control: the global shortcut (default ⌘⇧I) opens the island with key focus.
 //    ← / →      previous / next card

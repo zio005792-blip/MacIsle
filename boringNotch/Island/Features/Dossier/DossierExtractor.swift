@@ -1,6 +1,6 @@
 //
 //  DossierExtractor.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  On-device text extraction (Vision OCR, PDF text layer, Office/RTF/plain text),
 //  rule-based classification, field extraction and cross-document comparison.

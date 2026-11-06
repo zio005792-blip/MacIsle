@@ -1,6 +1,6 @@
 //
 //  DossierCenter.swift
-//  boringNotch – Dynamic Island skin
+//  MacIsle
 //
 //  Drop a client folder → OCR every file → classify → extract → cross-check → you confirm
 //  the conflicts on the island → a tidy Word document lands in ~/Downloads/客户资料整理/.
