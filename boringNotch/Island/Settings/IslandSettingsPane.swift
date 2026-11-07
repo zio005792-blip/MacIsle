@@ -24,6 +24,7 @@ struct IslandSettingsPane: View {
     @Default(.boringShelf) private var shelf
     @Default(.menubarIcon) private var menubarIcon
     @ObservedObject private var coordinator = BoringViewCoordinator.shared
+    @ObservedObject private var hudAccess = HUDAccess.shared
 
     var body: some View {
         Form {
@@ -102,11 +103,23 @@ struct IslandSettingsPane: View {
             }
 
             Section {
-                ForEach(settings.order) { tab in
+                ForEach(Array(settings.order.enumerated()), id: \.element) { index, tab in
                     HStack {
                         Image(systemName: tab.symbol).frame(width: 20).foregroundStyle(.secondary)
                         Text(tab.title)
                         Spacer()
+                        HStack(spacing: 2) {
+                            Button { settings.move(from: IndexSet(integer: index), to: index - 1) } label: {
+                                Image(systemName: "chevron.up")
+                            }
+                            .disabled(index == 0)
+                            Button { settings.move(from: IndexSet(integer: index), to: index + 2) } label: {
+                                Image(systemName: "chevron.down")
+                            }
+                            .disabled(index == settings.order.count - 1)
+                        }
+                        .buttonStyle(.borderless)
+                        .help(tr("调整顺序", "Reorder"))
                         Toggle("", isOn: Binding(
                             get: { !settings.hiddenTabs.contains(tab) },
                             set: { settings.setHidden(tab, !$0) }
@@ -116,10 +129,9 @@ struct IslandSettingsPane: View {
                         .controlSize(.small)
                     }
                 }
-                .onMove { settings.move(from: $0, to: $1) }
                 Button(tr("恢复默认顺序", "Restore Default Order")) { settings.resetOrder() }
             } header: {
-                Text(tr("卡片（拖动排序）", "Cards (drag to reorder)"))
+                Text(tr("卡片（用 ↑ ↓ 调整顺序）", "Cards (reorder with ↑ ↓)"))
             } footer: {
                 Text(tr("音乐和 AI 任务卡片只在有内容时出现。", "The Music and AI Tasks cards appear only when they have something to show.")).font(.caption).foregroundStyle(.secondary)
             }
@@ -131,7 +143,22 @@ struct IslandSettingsPane: View {
                 .onChange(of: mediaSource) { _, _ in
                     NotificationCenter.default.post(name: .mediaControllerChanged, object: nil)
                 }
-                Toggle(tr("用灵动岛显示音量 / 亮度（需要辅助功能权限）", "Show volume / brightness on the island (needs Accessibility)"), isOn: $hudReplacement)
+                Toggle(tr("用灵动岛显示音量 / 亮度（需要辅助功能权限）", "Show volume / brightness on the island (needs Accessibility)"),
+                       isOn: Binding(get: { hudAccess.isOn }, set: { hudAccess.setEnabled($0) }))
+                if hudAccess.state == .waiting || hudAccess.state == .denied {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(hudAccess.state == .waiting
+                             ? tr("等待授权：在「系统设置 › 隐私与安全性 › 辅助功能」里打开 MacIsle，授权后会自动开启。",
+                                  "Waiting for access: turn on MacIsle in System Settings › Privacy & Security › Accessibility — it switches on automatically.")
+                             : tr("没有检测到授权。打开辅助功能设置，开启 MacIsle 后再打开这个开关。",
+                                  "Access wasn't granted. Turn on MacIsle in Accessibility settings, then try again."))
+                        Text(tr("如果列表里已经有 MacIsle 但仍然无效（更新版本后常见），先用「−」删掉它，再重新添加。",
+                                "If MacIsle is already listed but this still doesn't work (common after updating), remove it with “−” and add it again."))
+                            .foregroundStyle(.secondary)
+                        Button(tr("打开辅助功能设置", "Open Accessibility Settings")) { HUDAccess.openSettings() }
+                    }
+                    .font(.caption)
+                }
                 Toggle(tr("文件暂存（拖文件到岛上）", "File shelf (drop files on the island)"), isOn: $shelf)
             }
 

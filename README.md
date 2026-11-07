@@ -72,7 +72,7 @@ Each card has its own size and the island morphs smoothly between them. When it 
 | **Clipboard** | Recently copied text, images and files — click to copy again; developer tools (below) |
 | **Files** | A shelf: drop files on the island to park them, drag them out later, or share via AirDrop |
 
-Hide cards you don't need or drag them into a different order in Settings.
+Hide cards you don't need or reorder them with ↑ ↓ in Settings.
 
 ### Store Screenshots
 **Why**: every App Store device size needs its own screenshots, and cropping them by hand is tedious.
@@ -131,7 +131,7 @@ Menu bar icon › Settings, or right-click the island › Settings.
 - **General**: launch at login, interface language (System / 中文 / English), which display, behaviour in full-screen apps, menu bar icon
 - **Appearance**: pill size, virtual camera dot, show the pill when idle
 - **Interaction**: hover-to-open and its delay, swipe distance to page, flick distance, haptics, keyboard shortcut
-- **Cards**: show / hide, drag to reorder
+- **Cards**: show / hide, reorder with ↑ ↓
 - **Media & System**: Now Playing source, volume / brightness on the island, file shelf
 - **Smart**: smart pick, show the reason, forget learned habits, clipboard history
 - **Self-check**: one click to verify the AI task channel, OCR, permissions, folder access, gesture logic and resource usage, with any problems listed

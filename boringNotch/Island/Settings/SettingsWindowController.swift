@@ -14,10 +14,9 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
 
     private init() {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 620, height: 720),
-                              styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered, defer: false)
         window.title = tr("MacIsle 设置", "MacIsle Settings")
-        window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 560, height: 480)
         window.contentView = NSHostingView(rootView: IslandSettingsPane().frame(minWidth: 560, minHeight: 480))
