@@ -56,6 +56,24 @@ enum IslandKeyboard {
         }
     }
 
+    /// Clicking a text field in the island: take key focus (without activating the app)
+    /// so typing works, and keep the island open until Esc / a click elsewhere.
+    static func beginTyping(_ vm: BoringViewModel) {
+        guard !IslandUIState.shared.keyboardFocus else { return }
+        IslandUIState.shared.keyboardFocus = true
+        for window in NSApp.windows.compactMap({ $0 as? BoringNotchSkyLightWindow }) {
+            window.allowsKeyFocus = true
+        }
+        NSApp.windows.first(where: { $0 is BoringNotchSkyLightWindow && $0.isVisible })?.makeKeyAndOrderFront(nil)
+        monitor.map(NSEvent.removeMonitor)
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            handle(event, vm: vm) ? nil : event
+        }
+        stateObserver = vm.$notchState.dropFirst().sink { state in
+            if state == .closed { Task { @MainActor in endFocus() } }
+        }
+    }
+
     static func close(_ vm: BoringViewModel) {
         withAnimation(IslandMotion.close) { vm.close() }
         endFocus()
@@ -79,6 +97,11 @@ enum IslandKeyboard {
     private static func handle(_ event: NSEvent, vm: BoringViewModel) -> Bool {
         // Leave text fields (e.g. future search) alone for printable keys.
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        // While typing in a text field, only Esc belongs to the island.
+        if NSApp.keyWindow?.firstResponder is NSTextView {
+            if event.keyCode == 53 { close(vm); return true }
+            return false
+        }
         switch event.keyCode {
         case 123: // ←
             NotificationCenter.default.post(name: .islandStep, object: -1); return true

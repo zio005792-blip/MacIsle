@@ -93,6 +93,7 @@ struct IslandExpandedView: View {
         switch tab {
         case .media: IslandMediaPage(namespace: namespace)
         case .agents: IslandAgentsPage()
+        case .ask: IslandAskPage().environmentObject(vm)
         case .dossier: IslandDossierPage()
         case .screens: IslandScreensPage()
         case .home: IslandHomePage(namespace: namespace)

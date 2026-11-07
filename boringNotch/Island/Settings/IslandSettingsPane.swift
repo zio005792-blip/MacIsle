@@ -25,6 +25,8 @@ struct IslandSettingsPane: View {
     @Default(.menubarIcon) private var menubarIcon
     @ObservedObject private var coordinator = BoringViewCoordinator.shared
     @ObservedObject private var hudAccess = HUDAccess.shared
+    @ObservedObject private var localAI = LocalAI.shared
+    @ObservedObject private var dossier = DossierCenter.shared
 
     var body: some View {
         Form {
@@ -168,6 +170,26 @@ struct IslandSettingsPane: View {
                 Button(tr("清除已学习的使用习惯", "Forget Learned Habits")) { IslandPredictor.shared.resetHabits() }
                 Toggle(tr("记录剪贴板历史（仅存于内存）", "Keep clipboard history (in memory only)"), isOn: $clipboard.isEnabled)
             }
+
+            Section {
+                LabeledContent(tr("状态", "Status")) {
+                    HStack(spacing: 6) {
+                        Circle().fill(localAI.status == .ready ? Color.green : (localAI.status == .offline ? Color.red : Color.orange))
+                            .frame(width: 7, height: 7)
+                        Text(localAI.modelName.isEmpty ? localAI.status.label : "\(localAI.modelName) · \(localAI.status.label)")
+                        Button(tr("刷新", "Refresh")) { Task { await localAI.refresh() } }
+                            .buttonStyle(.borderless)
+                    }
+                }
+                TextField(tr("接口地址", "Endpoint"), text: $localAI.endpoint)
+                Toggle(tr("资料整理报告里加入 AI 摘要", "Add an AI summary to dossier reports"), isOn: $dossier.useAISummary)
+                Text(tr("用你本机的模型提供「问 AI」卡片、剪贴板翻译 / 总结 / 润色 / 解释，以及资料整理的 AI 摘要，全程不联网。运行 scripts/connect-local-ai.sh 后，模型只在用到时加载，闲置 5 分钟自动释放内存。也支持任何兼容 OpenAI 接口的本地服务（LM Studio、Ollama 等），填上它的地址即可。",
+                        "Uses the model on your Mac for the Ask AI card, clipboard Translate / Summarize / Polish / Explain and dossier summaries — nothing goes online. After scripts/connect-local-ai.sh, the model loads only when needed and is unloaded after 5 idle minutes. Any local OpenAI-compatible server (LM Studio, Ollama…) works too — just enter its address."))
+                    .font(.caption).foregroundStyle(.secondary)
+            } header: {
+                Text(tr("本地 AI", "Local AI"))
+            }
+            .task { await localAI.refresh() }
 
             IslandSelfCheckSection()
 

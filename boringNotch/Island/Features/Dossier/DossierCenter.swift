@@ -31,6 +31,10 @@ final class DossierCenter: ObservableObject {
     @Published private(set) var startedAt: Date?
     @Published private(set) var diff: DossierDiff?
     @Published private(set) var redactedFolder: URL?
+    /// What the export is doing right now ("AI 正在写摘要…").
+    @Published private(set) var exportNote: String?
+    @AppStorage("island.dossier.aiSummary") var useAISummary: Bool = true
+    private var aiSummary: String?
     @AppStorage("island.dossier.checklist") var checklistKindRaw: String = DossierChecklistKind.app.rawValue
 
     var checklistKind: DossierChecklistKind {
@@ -100,6 +104,7 @@ final class DossierCenter: ObservableObject {
         fields = []
         diff = nil
         redactedFolder = nil
+        aiSummary = nil
         startedAt = .now
         phase = .scanning(done: 0, total: 0, current: tr("正在查找文件…", "Finding files…"))
 
@@ -199,13 +204,59 @@ final class DossierCenter: ObservableObject {
 
     private var reportContext: DossierReport.Context {
         DossierReport.Context(folder: folderName, documents: documents, fields: fields, startedAt: startedAt ?? .now,
-                              checklistKind: checklistKind, checklist: checklist, diff: diff)
+                              checklistKind: checklistKind, checklist: checklist, diff: diff, aiSummary: aiSummary)
+    }
+
+    /// Asks the local model for a short assessment of the dossier (≤ 90 s, best effort).
+    private func prepareAISummary() async {
+        guard useAISummary, aiSummary == nil else { return }
+        await LocalAI.shared.refresh()
+        guard LocalAI.shared.status.isUsable else { return }
+        exportNote = tr("本地 AI 正在写摘要…", "Local AI is writing a summary…")
+        defer { exportNote = nil }
+        var facts: [String] = []
+        facts.append("文件：" + categoryCounts.map { "\($0.0.title)\($0.1) 份" }.joined(separator: "、"))
+        for f in fields where f.kind.isIdentity || f.variants.count == 1 {
+            let values = f.variants.prefix(3).map { "\(f.kind.masked($0.value))（\($0.sources.count) 份）" }.joined(separator: " / ")
+            facts.append("\(f.kind.title)：\(values)\(f.variants.count > 1 ? "【不一致】" : "")")
+        }
+        if checklistKind != .none {
+            let missing = missingRequired.map(\.title)
+            facts.append("\(checklistKind.title)缺少：" + (missing.isEmpty ? "无" : missing.joined(separator: "、")))
+        }
+        if let d = diff { facts.append("与上一版相比：\(d.summary)") }
+        let excerpts = documents.prefix(8).map { "【\($0.name)】\($0.gist.prefix(80))" }.joined(separator: "\n")
+        let prompt = """
+        下面是一位客户提交的资料的整理结果。请用简体中文写一段不超过 180 字的摘要，分三句：
+        1. 这套资料是谁、为了什么提交的；2. 还缺什么或哪些信息不一致；3. 需要特别注意的风险。
+        不要编造没有给出的信息，不要输出身份证号、银行卡号等敏感号码。
+
+        \(facts.joined(separator: "\n"))
+
+        文件摘录：
+        \(excerpts)
+        """
+        let result = await withTaskGroup(of: String?.self) { group in
+            group.addTask { try? await LocalAI.shared.complete(prompt, maxTokens: 400) }
+            group.addTask { try? await Task.sleep(for: .seconds(90)); return nil }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+        if let result, !result.isEmpty { aiSummary = result }
     }
 
     /// 打码版: a masked report plus copies of every image / PDF with ID, phone and card numbers blacked out.
     func exportRedacted() {
         guard !documents.isEmpty else { return }
         phase = .exporting
+        Task {
+            await prepareAISummary()
+            exportRedactedNow()
+        }
+    }
+
+    private func exportRedactedNow() {
         let access = folderURL?.startAccessingSecurityScopedResource() ?? false
         defer { if access { folderURL?.stopAccessingSecurityScopedResource() } }
         do {
@@ -231,6 +282,13 @@ final class DossierCenter: ObservableObject {
     func export() {
         guard !documents.isEmpty else { return }
         phase = .exporting
+        Task {
+            await prepareAISummary()
+            exportNow()
+        }
+    }
+
+    private func exportNow() {
         let html = DossierReport.html(reportContext, masked: false)
         do {
             let url = try DossierReport.writeDocx(html: html, folder: folderName)

@@ -50,6 +50,7 @@ A countdown lives on the island and alerts you with a sound when it ends. Pomodo
 ### Also
 - **Music**: artwork and a live waveform; the track name pops up briefly when the song changes
 - **Keep Awake**: stops your Mac from dimming or sleeping — handy for long builds or presenting
+- **Hides in full screen**: watching video full screen (Douyin, Bilibili, video sites, players…) hides the island; choose always hide / always show in Settings
 - **Charging**: shows the battery level when you plug in or unplug
 - **Volume / brightness**: optionally replaces the system HUD (needs Accessibility)
 
@@ -63,6 +64,7 @@ Each card has its own size and the island morphs smoothly between them. When it 
 | --- | --- |
 | **Music** | Artwork, title, seekable progress bar, previous / play-pause / next |
 | **AI Tasks** | All AI and long-terminal tasks; click to jump to the conversation; clear finished ones |
+| **Ask AI** | Ask the model on your Mac; answers stream in; follow-ups and one-click copy (see [Local AI](#local-ai)) |
 | **Overview** | Day, date and time; countdown to your next event (with a Join button for online meetings); four quick toggles: Keep Awake, Pomodoro, Screenshot (to clipboard), Dark Mode |
 | **Timer** | Pomodoro and 1 / 3 / 5 / 10 / 25 / 60-minute timers; pause, add 1 / 5 min, or end while running |
 | **Calendar** | A week strip with the day's events and reminders |
@@ -108,6 +110,25 @@ Drop a client **folder** on the island and it will:
 
 You can close the island while it reads; progress shows on the island and you're notified when it's done. The generated report is in Chinese.
 
+### Local AI
+**Why**: translate an English error, summarise an email or polish a sentence without opening a browser or sending anything to the cloud.
+
+MacIsle can use a large language model running on your Mac (by default Qwen via MLX) — nothing goes online:
+- **Ask AI card**: ask right in the island and watch the answer stream in; it remembers the last 3 exchanges for follow-ups
+- **Clipboard AI actions**: one click to **translate** (Chinese ↔ English, direction detected), **summarise**, **polish** or **explain** (code and errors get what's wrong and how to fix it)
+- **Dossier AI summary**: the report gains a paragraph on what the documents are, what's missing and what to watch out for
+
+**Easy on resources**: the model is large (Qwen3.6-35B 4-bit ≈ 19 GB), so it isn't kept in memory. Only a tiny gateway (a few MB) runs in the background; the model loads on the first question (~15 s) and unloads after 5 idle minutes. Once loaded, the first word arrives in about a second.
+
+Enable it:
+
+```bash
+scripts/connect-local-ai.sh          # install the background gateway (runs at login)
+scripts/connect-local-ai.sh --undo   # remove it
+```
+
+Any local OpenAI-compatible server (LM Studio, Ollama, mlx_lm.server…) works too — enter its address in Settings › Local AI.
+
 ---
 
 ## Smart pick
@@ -134,6 +155,7 @@ Menu bar icon › Settings, or right-click the island › Settings.
 - **Cards**: show / hide, reorder with ↑ ↓
 - **Media & System**: Now Playing source, volume / brightness on the island, file shelf
 - **Smart**: smart pick, show the reason, forget learned habits, clipboard history
+- **Local AI**: model status, endpoint, AI summary in dossier reports
 - **Self-check**: one click to verify the AI task channel, OCR, permissions, folder access, gesture logic and resource usage, with any problems listed
 
 ---
@@ -185,7 +207,7 @@ scripts/package-release.sh    # create the zip and dmg in dist/
 
 ## Privacy
 
-- OCR, the client dossier, clipboard history and learned habits are all processed on your Mac; nothing is uploaded
+- OCR, the client dossier, clipboard history, learned habits and local AI are all processed on your Mac; nothing is uploaded
 - Clipboard history lives in memory only
 - Dossier version history stores file names, sizes and key facts only — never the full text
 

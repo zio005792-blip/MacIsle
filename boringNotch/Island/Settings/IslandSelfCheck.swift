@@ -42,6 +42,7 @@ final class IslandSelfCheck: ObservableObject {
             add(checkDownloads())
             add(checkSwipe())
             add(checkClipboard())
+            add(await checkLocalAI())
             add(perf)
             isRunning = false
             lastRun = .now
@@ -161,6 +162,20 @@ final class IslandSelfCheck: ObservableObject {
         let ok = swipe == .next && nudge == .pass && vertical == .pass
         return .init(name: tr("双指翻页", "Two-finger paging"), status: ok ? .ok : .fail,
                      detail: ok ? tr("滑动翻页、轻碰回弹、上下滚动不误触均正常", "Swipe paging, nudge spring-back and vertical scrolling all behave correctly") : tr("手势判断异常（滑动=\(swipe) 轻碰=\(nudge) 上下=\(vertical)）", "Gesture check failed (swipe=\(swipe) nudge=\(nudge) vertical=\(vertical))"))
+    }
+
+    private func checkLocalAI() async -> SelfCheckItem {
+        let ai = LocalAI.shared
+        await ai.refresh()
+        let name = tr("本地 AI", "Local AI")
+        switch ai.status {
+        case .ready, .sleeping, .loading:
+            return .init(name: name, status: .ok, detail: "\(ai.modelName.isEmpty ? ai.endpoint : ai.modelName) · \(ai.status.label)")
+        default:
+            return .init(name: name, status: .warn,
+                         detail: tr("没有连上 \(ai.endpoint)：运行 scripts/connect-local-ai.sh 启动本地模型网关",
+                                    "Can't reach \(ai.endpoint): run scripts/connect-local-ai.sh to start the local model gateway"))
+        }
     }
 
     private func checkClipboard() -> SelfCheckItem {

@@ -318,6 +318,20 @@ struct IslandClipboardPage: View {
                 .buttonStyle(IslandChipStyle())
                 .help(t.result.count > 300 ? String(t.result.prefix(300)) + "…" : t.result)
             }
+            if isHovered, case .text(let text) = item.content {
+                Menu {
+                    ForEach(AskSession.Action.allCases) { action in
+                        Button { AskSession.shared.run(action, on: text) } label: { Label(action.title, systemImage: action.symbol) }
+                    }
+                } label: {
+                    Image(systemName: "sparkles").font(.system(size: 10, weight: .bold))
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .foregroundStyle(.purple)
+                .help(tr("用本地 AI 翻译 / 总结 / 润色 / 解释", "Translate / summarize / polish / explain with local AI"))
+            }
             if transforms.isEmpty || !isHovered {
                 Text(item.date.formatted(.relative(presentation: .numeric)))
                     .font(.system(size: 9.5, weight: .medium))

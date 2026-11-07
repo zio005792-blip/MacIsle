@@ -190,6 +190,7 @@ struct IslandMetrics {
         switch tab {
         case .media: return CGSize(width: 278, height: 148)
         case .agents: return CGSize(width: 352, height: 148)
+        case .ask: return CGSize(width: 410, height: 206)
         case .screens: return CGSize(width: 352, height: 148)
         case .dossier: return CGSize(width: 410, height: 198)
         case .home: return CGSize(width: 352, height: 148)

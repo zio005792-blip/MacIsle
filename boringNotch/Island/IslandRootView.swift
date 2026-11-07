@@ -31,7 +31,7 @@ struct IslandRootView: View {
     @State private var hapticTick = false
     /// Dwell bookkeeping for hover-to-open. A reference type, so polling never re-renders the view.
     @State private var dwell = HoverDwell()
-    private static let hoverPoll = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    private static let hoverPoll = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
     private var metrics: IslandMetrics { IslandMetrics(screenUUID: vm.screenUUID) }
 
@@ -307,6 +307,19 @@ struct IslandRootView: View {
 
     /// Polled while closed: open when the pointer rests inside the expanded footprint.
     private func pollHoverZone() {
+        // Cheapest test first: nothing to do unless the pointer is near the top of a screen.
+        let pointer = NSEvent.mouseLocation
+        let nearTop = NSScreen.screens.contains { $0.frame.contains(pointer) && $0.frame.maxY - pointer.y < 260 }
+        #if DEBUG
+        let faking = IslandDebug.fakeMouse != nil
+        #else
+        let faking = false
+        #endif
+        guard nearTop || faking else {
+            if dwell.point != nil { dwell.reset() }
+            if !dwell.armed { dwell.armed = true }
+            return
+        }
         guard vm.notchState == .closed, Defaults[.openNotchOnHover], !coordinator.firstLaunch,
               presentation != .hidden, !coordinator.sneakPeek.show,
               NSEvent.pressedMouseButtons == 0, let zone = expandedZone() else {

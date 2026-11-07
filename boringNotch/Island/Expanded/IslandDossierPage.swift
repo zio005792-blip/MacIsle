@@ -192,7 +192,7 @@ struct IslandDossierPage: View {
                 Image(systemName: pending == 0 ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(pending == 0 ? Color.green : Color.orange)
-                Text(pending == 0 ? tr("已核对", "Verified") : tr("\(pending) 项待确认", "\(pending) to confirm"))
+                Text(center.exportNote ?? (pending == 0 ? tr("已核对", "Verified") : tr("\(pending) 项待确认", "\(pending) to confirm")))
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.7))
                 Spacer()
