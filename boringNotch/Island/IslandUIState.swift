@@ -10,7 +10,7 @@ import Defaults
 import SwiftUI
 
 enum IslandTab: String, CaseIterable, Identifiable {
-    case media, agents, ask, home, timer, calendar, dossier, screens, system, clipboard, shelf
+    case media, agents, home, timer, calendar, dossier, screens, system, clipboard, shelf
 
     var id: String { rawValue }
 
@@ -35,7 +35,6 @@ enum IslandTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: return "square.grid.2x2.fill"
         case .agents: return "sparkle"
-        case .ask: return "sparkles"
         case .dossier: return "doc.text.viewfinder"
         case .screens: return "iphone.gen3"
         case .media: return "music.note"
@@ -51,7 +50,6 @@ enum IslandTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: return tr("概览", "Overview")
         case .agents: return tr("AI 任务", "AI Tasks")
-        case .ask: return tr("问 AI", "Ask AI")
         case .dossier: return tr("资料整理", "Client Dossier")
         case .screens: return tr("商店截图", "Store Screenshots")
         case .media: return tr("音乐", "Music")

@@ -116,11 +116,6 @@ final class IslandPredictor {
         if MusicManager.shared.isPlaying { bump(.media, 3, tr("正在播放音乐", "music is playing")) }
         if ctx.meetingSoon { bump(.home, 6, tr("会议马上开始", "a meeting starts soon")) }
         if ctx.clipboardFresh { bump(.clipboard, 5, tr("刚复制的内容可以一键转换", "what you just copied can be converted")) }
-        if AskSession.shared.isRunning { bump(.ask, 8, tr("AI 正在回答你的问题", "the AI is answering you")) }
-        if let item = ClipboardHistory.shared.items.first, Date.now.timeIntervalSince(item.date) < 45,
-           case .text(let s) = item.content, s.count > 80, !ctx.clipboardFresh {
-            bump(.ask, 4, tr("可以让本地 AI 处理刚复制的文字", "local AI can work on the text you just copied"))
-        }
 
         // Front app.
         switch app {

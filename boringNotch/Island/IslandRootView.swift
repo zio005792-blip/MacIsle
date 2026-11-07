@@ -295,14 +295,18 @@ struct IslandRootView: View {
         withAnimation(IslandMotion.close) { vm.close() }
     }
 
-    /// Hover-to-open zone: the footprint the island will occupy once expanded (screen coordinates).
+    /// Hover-to-open zone: the resting island scaled to 110 % of its area (√1.1 per side), centred
+    /// on it and reaching up to the screen's top edge (screen coordinates).
     private func expandedZone() -> NSRect? {
         guard let window = NSApp.windows.first(where: { $0 is BoringNotchSkyLightWindow && $0.isVisible }) else { return nil }
         let m = metrics
-        let size = m.size(for: .expanded(ui.tab))
+        let resting = presentation == .hidden ? m.size(for: .idle) : m.size(for: presentation)
+        let k = (1.1).squareRoot()
+        let w = resting.width * k, h = resting.height * k
         let top = window.frame.maxY
-        return NSRect(x: window.frame.midX - size.width / 2, y: top - m.topGap - size.height,
-                      width: size.width, height: size.height + m.topGap)
+        let centerY = top - m.topGap - resting.height / 2
+        let bottom = centerY - h / 2
+        return NSRect(x: window.frame.midX - w / 2, y: bottom, width: w, height: top - bottom + 2)   // +2: the very top pixel row counts
     }
 
     /// Polled while closed: open when the pointer rests inside the expanded footprint.
@@ -332,6 +336,12 @@ struct IslandRootView: View {
         var p = NSEvent.mouseLocation
         #if DEBUG
         if let fake = IslandDebug.fakeMouse { p = fake }
+        #endif
+        #if DEBUG
+        if IslandDebug.fakeMouse != nil, IslandDebug.lastZone != zone {
+            IslandDebug.lastZone = zone
+            IslandDebug.log("zone \(zone) presentation=\(presentation.key) windowMidX=\(NSApp.windows.first { $0 is BoringNotchSkyLightWindow }?.frame.midX ?? 0) pointer=\(p)")
+        }
         #endif
         guard zone.contains(p) else { dwell.reset(); dwell.armed = true; return }
         // After the island closes, the pointer has to leave the area once before it can re-open.

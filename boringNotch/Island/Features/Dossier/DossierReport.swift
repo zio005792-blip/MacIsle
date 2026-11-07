@@ -18,7 +18,6 @@ enum DossierReport {
         let checklistKind: DossierChecklistKind
         let checklist: [DossierChecklistItem]
         let diff: DossierDiff?
-        var aiSummary: String? = nil
     }
 
     private static func esc(_ s: String) -> String {
@@ -93,11 +92,6 @@ enum DossierReport {
         }
         if let d = c.diff { h += " 与 \(f.string(from: d.previousDate)) 的上一版相比：\(d.summary)。" }
         h += "</p>"
-
-        if let summary = c.aiSummary, !summary.isEmpty {
-            h += "<h3>AI 摘要</h3><p>\(text(summary).replacingOccurrences(of: "\n", with: "<br>"))</p>"
-            h += "<p class=\"meta\">由本机的本地模型生成，仅供参考，请以原件为准。</p>"
-        }
 
         // 1b. Checklist
         if c.checklistKind != .none {

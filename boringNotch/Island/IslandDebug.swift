@@ -101,13 +101,6 @@ enum IslandDebug {
                 log("reveal \(first.id) jump=\(first.jumpURL?.absoluteString ?? "-") tty=\(first.tty ?? "-")")
                 AgentCenter.shared.reveal(first)
             }
-        case "ask":
-            AskSession.shared.ask(arg)
-        case "aiaction":
-            if let a = AskSession.Action(rawValue: arg),
-               let text = ClipboardHistory.shared.items.compactMap({ item -> String? in if case .text(let t) = item.content { return t }; return nil }).first {
-                AskSession.shared.run(a, on: text)
-            }
         case "fs":
             log("fullscreen=\(FullscreenMediaDetector.shared.fullscreenStatus) hideOnClosed=\(vm.hideOnClosed) option=\(Defaults[.hideNotchOption]) source=\(MusicManager.shared.bundleIdentifier ?? "-")")
         case "state":
