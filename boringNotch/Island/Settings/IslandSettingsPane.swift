@@ -138,7 +138,9 @@ struct IslandSettingsPane: View {
 
             Section(tr("媒体与系统", "Media & System")) {
                 Picker(tr("音乐信息来源", "Now Playing source"), selection: $mediaSource) {
-                    ForEach(MediaControllerType.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(MediaControllerType.allCases) { type in
+                        Text(type == .nowPlaying ? tr("所有应用（推荐）", "All apps (recommended)") : type.rawValue).tag(type)
+                    }
                 }
                 .onChange(of: mediaSource) { _, _ in
                     NotificationCenter.default.post(name: .mediaControllerChanged, object: nil)

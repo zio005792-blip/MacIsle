@@ -87,6 +87,14 @@ class MusicManager: ObservableObject {
                 self.isNowPlayingDeprecated = false
             }
             
+            // Earlier builds could leave the source on "Apple Music", which ignores every other player
+            // (browsers, Douyin, QuickTime, NetEase…). Move such installs to the system-wide source once.
+            let migratedKey = "island.mediaSource.allAppsMigrated.v1"
+            if !self.isNowPlayingDeprecated, !UserDefaults.standard.bool(forKey: migratedKey) {
+                if Defaults[.mediaController] == .appleMusic { Defaults[.mediaController] = .nowPlaying }
+                UserDefaults.standard.set(true, forKey: migratedKey)
+            }
+
             // Initialize the active controller after deprecation check
             self.setActiveControllerBasedOnPreference()
         }

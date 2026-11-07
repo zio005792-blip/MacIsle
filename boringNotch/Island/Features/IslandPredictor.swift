@@ -113,7 +113,8 @@ final class IslandPredictor {
         let dossier = DossierCenter.shared
         if dossier.isBusy || dossier.phase == .review { bump(.dossier, 7, dossier.isBusy ? tr("资料正在识别", "documents are being read") : tr("资料识别完成，等你核对", "the dossier is ready for review")) }
         if IslandTimer.shared.isActive { bump(.timer, 4, tr("计时进行中", "a timer is running")) }
-        if MusicManager.shared.isPlaying { bump(.media, 3, tr("正在播放音乐", "music is playing")) }
+        // Like the iPhone: while something is playing, opening the island goes to the player.
+        if MusicManager.shared.isPlaying { bump(.media, 8, tr("正在播放音乐", "music is playing")) }
         if ctx.meetingSoon { bump(.home, 6, tr("会议马上开始", "a meeting starts soon")) }
         if ctx.clipboardFresh { bump(.clipboard, 5, tr("刚复制的内容可以一键转换", "what you just copied can be converted")) }
 

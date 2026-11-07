@@ -201,7 +201,8 @@ struct IslandRootView: View {
                 ui.showHint(IslandSettings.shared.predictHint && guess.tab != .home && !guess.reason.isEmpty ? guess.reason : nil)
             } else {
                 _ = IslandPredictor.shared.guess(available: available, dragging: dragging)
-                if !available.contains(ui.tab) { ui.tab = available.first ?? .home }
+                if music.isPlaying, available.contains(.media) { ui.tab = .media }
+                else if !available.contains(ui.tab) { ui.tab = available.first ?? .home }
             }
             pendingTab = nil
             ui.dismissAlert()

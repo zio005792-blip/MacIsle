@@ -105,6 +105,9 @@ enum IslandDebug {
             log("fullscreen=\(FullscreenMediaDetector.shared.fullscreenStatus) hideOnClosed=\(vm.hideOnClosed) option=\(Defaults[.hideNotchOption]) source=\(MusicManager.shared.bundleIdentifier ?? "-")")
         case "state":
             log("state=\(vm.notchState)")
+        case "music":
+            let m = MusicManager.shared
+            log("music source=\(Defaults[.mediaController].rawValue) playing=\(m.isPlaying) idle=\(m.isPlayerIdle) title=\(m.songTitle) artist=\(m.artistName) app=\(m.bundleIdentifier ?? "-") tabs=\(IslandTab.available(musicActive: !m.isPlayerIdle || m.isPlaying).map(\.rawValue)) tab=\(IslandUIState.shared.tab.rawValue)")
         case "notch":
             UserDefaults.standard.set(arg != "off", forKey: "island.debug.simulateNotch")
             NotificationCenter.default.post(name: .notchHeightChanged, object: nil)
